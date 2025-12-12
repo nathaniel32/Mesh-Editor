@@ -20,7 +20,7 @@
                 <label>Load OBJ:</label>
                 <input type="file" 
                        accept=".obj"
-                       @change="loadOBJ"
+                       @change="import_service.loadOBJ"
                        ref="fileInput">
             </div>
 
@@ -91,17 +91,17 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
         import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
-        import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
         import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
-        import { CutService } from './services/cut.js';
+        import { CutService } from './services/Cut.js';
+        import { ImportService } from './services/Import.js';
         
         new Vue({
             el: '#app',
             data() {
                 return {
                     cut_service: new CutService(this),
+                    import_service: new ImportService(this),
                     scene: null,
                     camera: null,
                     renderer: null,
@@ -362,76 +362,6 @@
                         this.cutterMesh.material.color.setHex(color);
                     }
                 },
-
-                loadOBJ(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-
-                    this.statusText = 'Loading...';
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const loader = new OBJLoader();
-                            const obj = loader.parse(e.target.result);
-                            
-                            if (this.workingMesh) this.scene.remove(this.workingMesh);
-
-                            const geometries = [];
-                            obj.traverse((child) => {
-                                if (child.isMesh) {
-                                    const clonedGeometry = child.geometry.clone();
-                                    clonedGeometry.applyMatrix4(child.matrixWorld);
-                                    this.ensureUVAttribute(clonedGeometry);
-                                    geometries.push(clonedGeometry);
-                                }
-                            });
-
-                            const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries);
-                            mergedGeometry.computeVertexNormals();
-                            this.ensureUVAttribute(mergedGeometry);
-                            
-                            const box = new THREE.Box3().setFromBufferAttribute(mergedGeometry.attributes.position);
-                            const center = box.getCenter(new THREE.Vector3());
-                            const positions = mergedGeometry.attributes.position;
-                            for (let i = 0; i < positions.count; i++) {
-                                positions.setXYZ(
-                                    i,
-                                    positions.getX(i) - center.x,
-                                    positions.getY(i) - center.y,
-                                    positions.getZ(i) - center.z
-                                );
-                            }
-                            
-                            this.workingBrush = new Brush(mergedGeometry);
-                            this.workingBrush.updateMatrixWorld();
-
-                            this.workingMesh = new THREE.Mesh(
-                                mergedGeometry,
-                                new THREE.MeshStandardMaterial({
-                                    color: 0x3498db,
-                                    side: THREE.DoubleSide
-                                })
-                            );
-
-                            this.scene.add(this.workingMesh);
-
-                            const size = box.getSize(new THREE.Vector3()).length();
-                            this.camera.position.set(size, size, size);
-                            this.controls.target.set(0, 0, 0);
-                            this.controls.update();
-
-                            this.cutCount = 0;
-
-                            this.statusText = 'Loaded! Klik kanan + drag';
-                            setTimeout(() => this.statusText = '', 3000);
-                        } catch (err) {
-                            this.statusText = 'Error: ' + err.message;
-                            console.error(err);
-                        }
-                    };
-                    reader.readAsText(file);
-                },
-
                 previewCut() {
                     if (!this.workingBrush) {
                         alert('Load OBJ file dulu!');
