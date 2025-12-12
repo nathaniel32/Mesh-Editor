@@ -1,5 +1,33 @@
+import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
+
 export class ExportService {
     constructor(controller) {
         this.controller = controller;
+        this.exportMesh = this.exportMesh.bind(this);
+    }
+
+    exportMesh() {
+        if (!this.controller.workingMesh) return;
+        
+        this.controller.statusText = 'Exporting...';
+        
+        try {
+            const exporter = new OBJExporter();
+            const objString = exporter.parse(this.controller.workingMesh);
+
+            const blob = new Blob([objString], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cut_mesh_${this.controller.cutCount}cuts_${Date.now()}.obj`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            this.controller.statusText = `Exported with ${this.controller.cutCount} cuts!`;
+            setTimeout(() => this.controller.statusText = '', 2000);
+        } catch (err) {
+            this.controller.statusText = 'Export error: ' + err.message;
+            console.error(err);
+        }
     }
 }

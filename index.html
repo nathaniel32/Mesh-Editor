@@ -64,7 +64,7 @@
                 </div>
                 
                 <button v-show="cutCount > 0 && !isPreviewing" 
-                        @click="exportMesh">EXPORT OBJ</button>
+                        @click="export_service.exportMesh">EXPORT OBJ</button>
                 
                 <button v-show="cutCount > 0 && !isPreviewing" 
                         @click="resetAll">RESET ALL</button>
@@ -91,10 +91,10 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
         import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
         import { CutService } from './services/Cut.js';
         import { ImportService } from './services/Import.js';
+        import { ExportService } from './services/Export.js';
         
         new Vue({
             el: '#app',
@@ -102,6 +102,7 @@
                 return {
                     cut_service: new CutService(this),
                     import_service: new ImportService(this),
+                    export_service: new ExportService(this),
                     scene: null,
                     camera: null,
                     renderer: null,
@@ -450,31 +451,6 @@
                     this.isPreviewing = false;
                     this.previewDisabled = false;
                     this.statusText = 'Cancelled. Select again';
-                },
-
-                exportMesh() {
-                    if (!this.workingMesh) return;
-                    
-                    this.statusText = 'Exporting...';
-                    
-                    try {
-                        const exporter = new OBJExporter();
-                        const objString = exporter.parse(this.workingMesh);
-
-                        const blob = new Blob([objString], { type: 'text/plain' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `cut_mesh_${this.cutCount}cuts_${Date.now()}.obj`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-
-                        this.statusText = `Exported with ${this.cutCount} cuts!`;
-                        setTimeout(() => this.statusText = '', 2000);
-                    } catch (err) {
-                        this.statusText = 'Export error: ' + err.message;
-                        console.error(err);
-                    }
                 },
 
                 resetAll() {
