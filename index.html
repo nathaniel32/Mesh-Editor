@@ -29,10 +29,10 @@
                 <div class="toggle-group">
                     <button class="toggle-btn" 
                             :class="{ active: cut_service.mode === 'remove' }"
-                            @click="setMode('remove')">Remove</button>
+                            @click="cut_service.setMode('remove')">Remove</button>
                     <button class="toggle-btn" 
                             :class="{ active: cut_service.mode === 'keep' }"
-                            @click="setMode('keep')">Keep</button>
+                            @click="cut_service.setMode('keep')">Keep</button>
                 </div>
             </div>
 
@@ -352,15 +352,6 @@
                     const modeText = this.cut_service.mode === 'remove' ? 'REMOVE' : 'KEEP';
                     this.selectionInfo.text = `Mode: ${modeText}`;
                     this.statusText = 'Selection ready! Click PREVIEW';
-                },
-
-                setMode(mode) {
-                    this.cut_service.mode = mode;
-                    
-                    if (this.cutterMesh) {
-                        const color = mode === 'remove' ? 0xff0000 : 0x00ff00;
-                        this.cutterMesh.material.color.setHex(color);
-                    }
                 },
                 previewCut() {
                     if (!this.workingBrush) {
