@@ -25,7 +25,7 @@
                 <label>Load OBJ:</label>
                 <input type="file" 
                        accept=".obj"
-                       @change="import_service.loadOBJ"
+                       @change="importService.loadOBJ"
                        ref="fileInput">
             </div>
 
@@ -33,11 +33,11 @@
                 <label>Mode:</label>
                 <div class="toggle-group">
                     <button class="toggle-btn" 
-                            :class="{ active: cut_tool.mode === 'remove' }"
-                            @click="cut_tool.setMode('remove')">Remove</button>
+                            :class="{ active: cutTool.mode === 'remove' }"
+                            @click="cutTool.setMode('remove')">Remove</button>
                     <button class="toggle-btn" 
-                            :class="{ active: cut_tool.mode === 'keep' }"
-                            @click="cut_tool.setMode('keep')">Keep</button>
+                            :class="{ active: cutTool.mode === 'keep' }"
+                            @click="cutTool.setMode('keep')">Keep</button>
                 </div>
             </div>
 
@@ -52,15 +52,15 @@
                 <button class="cut" 
                         v-show="!isPreviewing"
                         :disabled="previewDisabled"
-                        @click="cut_tool.previewCut">PREVIEW CUT</button>
+                        @click="cutTool.previewCut">PREVIEW CUT</button>
                 
                 <div class="btn-row" v-show="isPreviewing">
-                    <button class="apply" @click="cut_tool.applyCut">APPLY CUT</button>
-                    <button @click="cut_tool.cancelPreview">CANCEL</button>
+                    <button class="apply" @click="cutTool.applyCut">APPLY CUT</button>
+                    <button @click="cutTool.cancelPreview">CANCEL</button>
                 </div>
                 
                 <button v-show="cutCount > 0 && !isPreviewing" 
-                        @click="export_service.exportMesh">EXPORT OBJ</button>
+                        @click="exportService.exportMesh">EXPORT OBJ</button>
                             
                 <div id="status">{{ statusText }}</div>
             </div>

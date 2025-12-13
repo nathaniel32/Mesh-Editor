@@ -15,14 +15,14 @@ new Vue({
         return {
             container: null,
             features: new Features(),
-            cut_tool: new CutTool(this),
-            move_tool: new MoveTool(this),
-            scale_tool: new ScaleTool(this),
-            import_service: new ImportService(this),
-            export_service: new ExportService(this),
+            cutTool: new CutTool(this),
+            moveTool: new MoveTool(this),
+            scaleTool: new ScaleTool(this),
+            importService: new ImportService(this),
+            exportService: new ExportService(this),
+            renderScene: new RenderScene(this),
             scene: null,
             camera: null,
-            renderer: null,
             controls: null,
             workingMesh: null,
             workingBrush: null,
@@ -71,10 +71,9 @@ new Vue({
         }
     },
     mounted() {
-        this.features.list = [this.import_service, this.export_service, this.cut_tool, this.move_tool, this.scale_tool];
+        this.features.list = [this.importService, this.exportService, this.cutTool, this.moveTool, this.scaleTool];
         this.container = this.$refs.canvasContainer;
-        var renderScene = new RenderScene(this);
-        renderScene.initScene();
-        renderScene.animate();
+        this.renderScene.initScene();
+        this.renderScene.animate();
     }
 });

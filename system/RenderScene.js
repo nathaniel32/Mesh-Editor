@@ -5,12 +5,13 @@ export class RenderScene {
     constructor(controller) {
         this.controller = controller
         this.animate = this.animate.bind(this);
+        this.renderer = null;
     }
 
     handleResize() {
         this.controller.camera.aspect = this.controller.container.clientWidth / this.controller.container.clientHeight;
         this.controller.camera.updateProjectionMatrix();
-        this.controller.renderer.setSize(this.controller.container.clientWidth, this.controller.container.clientHeight);
+        this.renderer.setSize(this.controller.container.clientWidth, this.controller.container.clientHeight);
     }
 
     initScene() {
@@ -20,11 +21,11 @@ export class RenderScene {
         this.controller.camera = new THREE.PerspectiveCamera(75, this.controller.container.clientWidth / this.controller.container.clientHeight, 0.1, 10000);
         this.controller.camera.position.set(3, 3, 3);
 
-        this.controller.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.controller.renderer.setSize(this.controller.container.clientWidth, this.controller.container.clientHeight);
-        this.controller.container.appendChild(this.controller.renderer.domElement);
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer.setSize(this.controller.container.clientWidth, this.controller.container.clientHeight);
+        this.controller.container.appendChild(this.renderer.domElement);
 
-        this.controller.controls = new OrbitControls(this.controller.camera, this.controller.renderer.domElement);
+        this.controller.controls = new OrbitControls(this.controller.camera, this.renderer.domElement);
         this.controller.controls.enableDamping = true;
         this.controller.controls.mouseButtons = {
             LEFT: THREE.MOUSE.ROTATE,
@@ -47,6 +48,6 @@ export class RenderScene {
     animate() {
         requestAnimationFrame(this.animate);
         this.controller.controls.update();
-        this.controller.renderer.render(this.controller.scene, this.controller.camera);
+        this.renderer.render(this.controller.scene, this.controller.camera);
     }
 }

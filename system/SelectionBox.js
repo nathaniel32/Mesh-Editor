@@ -49,7 +49,7 @@ export class SelectionBox {
             this.controller.controls.enabled = true;
             this.controller.selectionBox.visible = false;
             
-            this.controller.cut_tool.createCuttingVolume();
+            this.controller.cutTool.createCuttingVolume();
         });
 
         this.controller.container.addEventListener('contextmenu', (e) => {
