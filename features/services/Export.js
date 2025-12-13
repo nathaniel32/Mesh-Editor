@@ -1,5 +1,5 @@
 import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
-import { Feature } from '../models/Feature.js';
+import { Feature } from '../../models/Feature.js';
 
 export class ExportService extends Feature{
     constructor(controller) {

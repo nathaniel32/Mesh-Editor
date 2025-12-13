@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
-import { Feature } from '../models/Feature.js';
+import { Feature } from '../../models/Feature.js';
 
 export class ImportService extends Feature{
     constructor(controller) {
