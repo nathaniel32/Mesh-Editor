@@ -3,8 +3,4 @@ export class Feature {
         this.icon = icon,
         this.isActive = false
     }
-
-    toggleActive() {
-        this.isActive = !this.isActive;
-    }
 }

@@ -11,6 +11,14 @@ export class ImportService extends Feature{
         this.loadOBJ = this.loadOBJ.bind(this);
     }
 
+    activate(){
+        this.isActive = true;
+    }
+
+    deactivate(){
+        this.isActive = false;
+    }
+
     loadOBJ(event) {
         const file = event.target.files[0];
         if (!file) return;

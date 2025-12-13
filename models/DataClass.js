@@ -6,7 +6,11 @@ export class Features {
 
     activate(index){
         this.list.forEach((tool, i) => {
-            tool.isActive = i === index;
+            if (i === index){
+                tool.activate();
+            }else{
+                tool.deactivate();
+            }
         });
         this.selectedIndex = index;
         console.log(`Activated index: ${index}`);

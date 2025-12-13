@@ -8,6 +8,14 @@ export class ExportService extends Feature{
         this.exportMesh = this.exportMesh.bind(this);
     }
 
+    activate(){
+        this.isActive = true;
+    }
+
+    deactivate(){
+        this.isActive = false;
+    }
+
     exportMesh() {
         if (!this.controller.workingMesh) return;
         

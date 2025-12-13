@@ -10,6 +10,14 @@ export class CutTool extends Feature{
         this.applyCut = this.applyCut.bind(this);
     }
 
+    activate(){
+        this.isActive = true;
+    }
+
+    deactivate(){
+        this.isActive = false;
+    }
+
     setMode(mode) {
         console.log(mode);
         
