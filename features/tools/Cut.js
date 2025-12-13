@@ -10,6 +10,7 @@ export class CutTool extends Feature{
         this.mode = 'remove';
         this.applyCut = this.applyCut.bind(this);
         this.cancelPreview = this.cancelPreview.bind(this);
+        this.previewCut = this.previewCut.bind(this);
         this.selection = new SelectionBox(controller);
     }
 
@@ -37,6 +38,51 @@ export class CutTool extends Feature{
         this.controller.isPreviewing = false;
         this.controller.previewDisabled = false;
         this.controller.statusText = 'Cancelled. Select again';
+    }
+
+    previewCut() {
+        if (!this.controller.workingBrush) {
+            alert('Load OBJ file dulu!');
+            return;
+        }
+
+        if (!this.controller.cutterBrush) {
+            alert('Klik kanan + drag untuk select area!');
+            return;
+        }
+
+        this.controller.statusText = 'Calculating preview...';
+        this.controller.previewDisabled = true;
+
+        setTimeout(() => {
+            try {
+                const operation = this.mode === 'remove' ? HOLLOW_SUBTRACTION : HOLLOW_INTERSECTION;
+                
+                const result = this.controller.evaluator.evaluate(this.controller.workingBrush, this.controller.cutterBrush, operation);
+                
+                this.controller.workingMesh.visible = false;
+                
+                if (this.controller.previewMesh) {
+                    this.controller.scene.remove(this.controller.previewMesh);
+                }
+                
+                this.controller.previewMesh = new THREE.Mesh(
+                    result.geometry,
+                    new THREE.MeshStandardMaterial({
+                        color: 0xf39c12,
+                        side: THREE.DoubleSide
+                    })
+                );
+                this.controller.scene.add(this.controller.previewMesh);
+                
+                this.controller.isPreviewing = true;
+                this.controller.statusText = 'Preview OK! APPLY or CANCEL';
+            } catch (err) {
+                this.controller.statusText = 'Error: ' + err.message;
+                console.error('CSG Error:', err);
+                this.controller.previewDisabled = false;
+            }
+        }, 100);
     }
 
     setMode(mode) {

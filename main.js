@@ -112,51 +112,6 @@ new Vue({
             this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
         },
 
-        previewCut() {
-            if (!this.workingBrush) {
-                alert('Load OBJ file dulu!');
-                return;
-            }
-
-            if (!this.cutterBrush) {
-                alert('Klik kanan + drag untuk select area!');
-                return;
-            }
-
-            this.statusText = 'Calculating preview...';
-            this.previewDisabled = true;
-
-            setTimeout(() => {
-                try {
-                    const operation = this.cut_tool.mode === 'remove' ? HOLLOW_SUBTRACTION : HOLLOW_INTERSECTION;
-                    
-                    const result = this.evaluator.evaluate(this.workingBrush, this.cutterBrush, operation);
-                    
-                    this.workingMesh.visible = false;
-                    
-                    if (this.previewMesh) {
-                        this.scene.remove(this.previewMesh);
-                    }
-                    
-                    this.previewMesh = new THREE.Mesh(
-                        result.geometry,
-                        new THREE.MeshStandardMaterial({
-                            color: 0xf39c12,
-                            side: THREE.DoubleSide
-                        })
-                    );
-                    this.scene.add(this.previewMesh);
-                    
-                    this.isPreviewing = true;
-                    this.statusText = 'Preview OK! APPLY or CANCEL';
-                } catch (err) {
-                    this.statusText = 'Error: ' + err.message;
-                    console.error('CSG Error:', err);
-                    this.previewDisabled = false;
-                }
-            }, 100);
-        },
-
         animate() {
             requestAnimationFrame(this.animate);
             this.controls.update();

@@ -52,7 +52,7 @@
                 <button class="cut" 
                         v-show="!isPreviewing"
                         :disabled="previewDisabled"
-                        @click="previewCut">PREVIEW CUT</button>
+                        @click="cut_tool.previewCut">PREVIEW CUT</button>
                 
                 <div class="btn-row" v-show="isPreviewing">
                     <button class="apply" @click="cut_tool.applyCut">APPLY CUT</button>
