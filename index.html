@@ -61,10 +61,7 @@
                 
                 <button v-show="cutCount > 0 && !isPreviewing" 
                         @click="export_service.exportMesh">EXPORT OBJ</button>
-                
-                <button v-show="cutCount > 0 && !isPreviewing" 
-                        @click="resetAll">RESET ALL</button>
-                
+                            
                 <div id="status">{{ statusText }}</div>
             </div>
         </div>

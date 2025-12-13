@@ -172,12 +172,6 @@ new Vue({
             this.statusText = 'Cancelled. Select again';
         },
 
-        resetAll() {
-            if (confirm('Reset semua cuts dan mulai dari awal?')) {
-                location.reload();
-            }
-        },
-
         animate() {
             requestAnimationFrame(this.animate);
             this.controls.update();
