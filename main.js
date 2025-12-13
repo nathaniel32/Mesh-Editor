@@ -3,6 +3,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
 import { Features } from './models/DataClass.js';
 import { CutTool } from './features/tools/Cut.js';
+import { MoveTool } from './features/tools/Move.js';
+import { ScaleTool } from './features/tools/Scale.js';
 import { ImportService } from './features/services/Import.js';
 import { ExportService } from './features/services/Export.js';
 
@@ -12,6 +14,8 @@ new Vue({
         return {
             features: new Features(),
             cut_tool: new CutTool(this),
+            move_tool: new MoveTool(this),
+            scale_tool: new ScaleTool(this),
             import_service: new ImportService(this),
             export_service: new ExportService(this),
             scene: null,
@@ -56,7 +60,7 @@ new Vue({
         }
     },
     mounted() {
-        this.features.list = [this.cut_tool, this.import_service, this.export_service];
+        this.features.list = [this.import_service, this.export_service, this.cut_tool, this.move_tool, this.scale_tool];
         this.initScene();
         this.animate();
         this.setupDragSelection();
