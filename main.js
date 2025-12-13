@@ -7,6 +7,7 @@ import { MoveTool } from './features/tools/Move.js';
 import { ScaleTool } from './features/tools/Scale.js';
 import { ImportService } from './features/services/Import.js';
 import { ExportService } from './features/services/Export.js';
+import { RenderScene } from './system/RenderScene.js';
 
 new Vue({
     el: '#app',
@@ -67,58 +68,13 @@ new Vue({
                 geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
             }
             return geometry;
-        },
-
-        initScene() {
-            this.scene = new THREE.Scene();
-            this.scene.background = new THREE.Color(0x1a1a1a);
-
-            this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 10000);
-            this.camera.position.set(3, 3, 3);
-
-            this.renderer = new THREE.WebGLRenderer({ antialias: true });
-            this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-            this.container.appendChild(this.renderer.domElement);
-
-            this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-            this.controls.enableDamping = true;
-            this.controls.mouseButtons = {
-                LEFT: THREE.MOUSE.ROTATE,
-                MIDDLE: THREE.MOUSE.DOLLY,
-                RIGHT: null
-            };
-
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            this.scene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-            directionalLight.position.set(5, 5, 5);
-            this.scene.add(directionalLight);
-
-            const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
-            this.scene.add(gridHelper);
-
-            window.addEventListener('resize', this.handleResize);
-        },
-
-        handleResize() {
-            this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
-            this.camera.updateProjectionMatrix();
-            this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-        },
-
-        animate() {
-            requestAnimationFrame(this.animate);
-            this.controls.update();
-            this.renderer.render(this.scene, this.camera);
         }
     },
     mounted() {
         this.features.list = [this.import_service, this.export_service, this.cut_tool, this.move_tool, this.scale_tool];
         this.container = this.$refs.canvasContainer;
-        this.initScene();
-        this.animate();
-    },
-    beforeDestroy() {
-        window.removeEventListener('resize', this.handleResize);
+        var renderScene = new RenderScene(this);
+        renderScene.initScene();
+        renderScene.animate();
     }
 });
