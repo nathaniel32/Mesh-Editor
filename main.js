@@ -12,6 +12,7 @@ new Vue({
     el: '#app',
     data() {
         return {
+            container: null,
             features: new Features(),
             cut_tool: new CutTool(this),
             move_tool: new MoveTool(this),
@@ -27,9 +28,6 @@ new Vue({
             cutterMesh: null,
             previewMesh: null,
             evaluator: new Evaluator(),
-            dragStart: null,
-            dragEnd: null,
-            isDragging: false,
             cutterBrush: null,
             
             cutCount: 0,
@@ -61,9 +59,9 @@ new Vue({
     },
     mounted() {
         this.features.list = [this.import_service, this.export_service, this.cut_tool, this.move_tool, this.scale_tool];
+        this.container = this.$refs.canvasContainer;
         this.initScene();
         this.animate();
-        this.setupDragSelection();
     },
     methods: {
         ensureUVAttribute(geometry) {
@@ -85,13 +83,12 @@ new Vue({
             this.scene = new THREE.Scene();
             this.scene.background = new THREE.Color(0x1a1a1a);
 
-            const container = this.$refs.canvasContainer;
-            this.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 10000);
+            this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 10000);
             this.camera.position.set(3, 3, 3);
 
             this.renderer = new THREE.WebGLRenderer({ antialias: true });
-            this.renderer.setSize(container.clientWidth, container.clientHeight);
-            container.appendChild(this.renderer.domElement);
+            this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+            this.container.appendChild(this.renderer.domElement);
 
             this.controls = new OrbitControls(this.camera, this.renderer.domElement);
             this.controls.enableDamping = true;
@@ -114,62 +111,11 @@ new Vue({
         },
 
         handleResize() {
-            const container = this.$refs.canvasContainer;
-            this.camera.aspect = container.clientWidth / container.clientHeight;
+            this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
             this.camera.updateProjectionMatrix();
-            this.renderer.setSize(container.clientWidth, container.clientHeight);
+            this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
         },
 
-        setupDragSelection() {
-            const container = this.$refs.canvasContainer;
-
-            container.addEventListener('mousedown', (e) => {
-                if (e.button !== 2 || !this.workingMesh) return;
-                
-                e.preventDefault();
-                this.isDragging = true;
-                this.controls.enabled = false;
-                this.dragStart = { x: e.clientX, y: e.clientY };
-                this.dragEnd = { x: e.clientX, y: e.clientY };
-                
-                this.selectionBox.visible = true;
-            });
-
-            container.addEventListener('mousemove', (e) => {
-                if (!this.isDragging) return;
-                
-                e.preventDefault();
-                this.dragEnd = { x: e.clientX, y: e.clientY };
-                this.updateSelectionBoxUI();
-            });
-
-            container.addEventListener('mouseup', (e) => {
-                if (!this.isDragging) return;
-                
-                e.preventDefault();
-                this.isDragging = false;
-                this.controls.enabled = true;
-                this.selectionBox.visible = false;
-                
-                this.cut_tool.createCuttingVolume();
-            });
-
-            container.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-            });
-        },
-
-        updateSelectionBoxUI() {
-            const x1 = Math.min(this.dragStart.x, this.dragEnd.x);
-            const y1 = Math.min(this.dragStart.y, this.dragEnd.y);
-            const x2 = Math.max(this.dragStart.x, this.dragEnd.x);
-            const y2 = Math.max(this.dragStart.y, this.dragEnd.y);
-
-            this.selectionBox.left = x1;
-            this.selectionBox.top = y1;
-            this.selectionBox.width = x2 - x1;
-            this.selectionBox.height = y2 - y1;
-        },
         previewCut() {
             if (!this.workingBrush) {
                 alert('Load OBJ file dulu!');
