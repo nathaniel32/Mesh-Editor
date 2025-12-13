@@ -1,6 +1,6 @@
 export class Features {
     constructor() {
-        this.features = [],
+        this.list = [],
         this.selectedIndex = 0
     }
 }

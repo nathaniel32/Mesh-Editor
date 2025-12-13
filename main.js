@@ -56,7 +56,7 @@ new Vue({
         }
     },
     mounted() {
-        this.features.features = [this.cut_service, this.import_service, this.export_service];
+        this.features.list = [this.cut_service, this.import_service, this.export_service];
         this.initScene();
         this.animate();
         this.setupDragSelection();
