@@ -144,7 +144,7 @@ new Vue({
                 this.controls.enabled = true;
                 this.selectionBox.visible = false;
                 
-                this.createCuttingVolume();
+                this.cut_service.createCuttingVolume();
             });
 
             container.addEventListener('contextmenu', (e) => {
@@ -162,106 +162,6 @@ new Vue({
             this.selectionBox.top = y1;
             this.selectionBox.width = x2 - x1;
             this.selectionBox.height = y2 - y1;
-        },
-
-        createCuttingVolume() {
-            if (!this.workingMesh) return;
-
-            const containerRect = this.$refs.canvasContainer.getBoundingClientRect();
-
-            const x1 = Math.min(this.dragStart.x, this.dragEnd.x);
-            const y1 = Math.min(this.dragStart.y, this.dragEnd.y);
-            const x2 = Math.max(this.dragStart.x, this.dragEnd.x);
-            const y2 = Math.max(this.dragStart.y, this.dragEnd.y);
-
-            const ndcX1 = ((x1 - containerRect.left) / containerRect.width) * 2 - 1;
-            const ndcY1 = -((y1 - containerRect.top) / containerRect.height) * 2 + 1;
-            const ndcX2 = ((x2 - containerRect.left) / containerRect.width) * 2 - 1;
-            const ndcY2 = -((y2 - containerRect.top) / containerRect.height) * 2 + 1;
-
-            const raycaster = new THREE.Raycaster();
-            const meshBox = new THREE.Box3().setFromObject(this.workingMesh);
-            const meshSize = meshBox.getSize(new THREE.Vector3());
-            
-            const centerNDC = new THREE.Vector2((ndcX1 + ndcX2) / 2, (ndcY1 + ndcY2) / 2);
-            raycaster.setFromCamera(centerNDC, this.camera);
-            const intersects = raycaster.intersectObject(this.workingMesh);
-            
-            let centerDepth;
-            if (intersects.length > 0) {
-                centerDepth = intersects[0].distance;
-            } else {
-                centerDepth = this.camera.position.distanceTo(meshBox.getCenter(new THREE.Vector3()));
-            }
-
-            const depth = meshSize.length() * 2;
-            const nearDist = Math.max(0.1, centerDepth - depth);
-            const farDist = centerDepth + depth;
-
-            const corners = [
-                new THREE.Vector2(ndcX1, ndcY1),
-                new THREE.Vector2(ndcX2, ndcY1),
-                new THREE.Vector2(ndcX2, ndcY2),
-                new THREE.Vector2(ndcX1, ndcY2)
-            ];
-
-            const positions = [];
-            
-            for (const corner of corners) {
-                raycaster.setFromCamera(corner, this.camera);
-                const point = raycaster.ray.origin.clone().add(
-                    raycaster.ray.direction.clone().multiplyScalar(nearDist)
-                );
-                positions.push(point.x, point.y, point.z);
-            }
-            
-            for (const corner of corners) {
-                raycaster.setFromCamera(corner, this.camera);
-                const point = raycaster.ray.origin.clone().add(
-                    raycaster.ray.direction.clone().multiplyScalar(farDist)
-                );
-                positions.push(point.x, point.y, point.z);
-            }
-
-            const geometry = new THREE.BufferGeometry();
-            geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
-            
-            const indices = [
-                0, 2, 1,  0, 3, 2,
-                4, 5, 6,  4, 6, 7,
-                0, 1, 5,  0, 5, 4,
-                3, 7, 6,  3, 6, 2,
-                0, 4, 7,  0, 7, 3,
-                1, 2, 6,  1, 6, 5
-            ];
-            
-            geometry.setIndex(indices);
-            geometry.computeVertexNormals();
-            this.ensureUVAttribute(geometry);
-
-            if (this.cutterMesh) {
-                this.scene.remove(this.cutterMesh);
-            }
-
-            const color = this.cut_service.mode === 'remove' ? 0xff0000 : 0x00ff00;
-            const material = new THREE.MeshBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: 0.4,
-                side: THREE.DoubleSide,
-                depthWrite: false
-            });
-            
-            this.cutterMesh = new THREE.Mesh(geometry, material);
-            this.scene.add(this.cutterMesh);
-
-            this.cutterBrush = new Brush(geometry);
-            this.cutterBrush.updateMatrixWorld();
-
-            this.selectionInfo.visible = true;
-            const modeText = this.cut_service.mode === 'remove' ? 'REMOVE' : 'KEEP';
-            this.selectionInfo.text = `Mode: ${modeText}`;
-            this.statusText = 'Selection ready! Click PREVIEW';
         },
         previewCut() {
             if (!this.workingBrush) {
