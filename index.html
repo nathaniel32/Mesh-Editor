@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mesh Editor</title>
     <link href="assets/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 </head>
 <body>
     <div id="app">
@@ -15,6 +16,10 @@
         </div>
         <div id="controls">
             <h3>Mesh Editor</h3>
+
+            <div v-for="(tool, index) in tools" :key="index">
+                <button><i :class="tool.icon"></i></button>
+            </div>
             
             <div class="control-group">
                 <label>Load OBJ:</label>
@@ -88,6 +93,6 @@
     }
     </script>
 
-    <script type="module" src="system/main.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>

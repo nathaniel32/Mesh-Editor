@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
+import { Menu } from '../models/Menu.js';
 
-export class ImportService {
+export class ImportService extends Menu{
     constructor(controller) {
+        super("fa-solid fa-file-import");
         this.controller = controller;
         this.loadOBJ = this.loadOBJ.bind(this);
     }

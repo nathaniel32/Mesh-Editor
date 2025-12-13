@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
+import { Menu } from '../models/Menu.js';
 
-export class CutService {
+export class CutTool extends Menu{
     constructor(controller) {
+        super("fa-solid fa-scissors");
         this.controller = controller;
         this.mode = 'remove';
         this.applyCut = this.applyCut.bind(this);
