@@ -4,10 +4,10 @@ export class Features {
         this.selectedIndex = 0
     }
 
-    activate(index){
+    toggle(index){
         this.list.forEach((tool, i) => {
             if (i === index){
-                tool.activate();
+                tool.toggle();
             }else{
                 tool.deactivate();
             }

@@ -10,10 +10,12 @@ export class CutTool extends Feature{
         this.applyCut = this.applyCut.bind(this);
     }
 
+    //override
     activate(){
         this.isActive = true;
     }
 
+    //override
     deactivate(){
         this.isActive = false;
     }

@@ -8,10 +8,12 @@ export class ExportService extends Feature{
         this.exportMesh = this.exportMesh.bind(this);
     }
 
+    //override
     activate(){
         this.isActive = true;
     }
 
+    //override
     deactivate(){
         this.isActive = false;
     }

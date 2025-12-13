@@ -11,10 +11,12 @@ export class ImportService extends Feature{
         this.loadOBJ = this.loadOBJ.bind(this);
     }
 
+    //override
     activate(){
         this.isActive = true;
     }
 
+    //override
     deactivate(){
         this.isActive = false;
     }
