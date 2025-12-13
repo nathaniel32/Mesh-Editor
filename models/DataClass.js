@@ -5,6 +5,10 @@ export class Features {
     }
 
     activate(index){
-        this.list[index].isActive = true;
+        this.list.forEach((tool, i) => {
+            tool.isActive = i === index;
+        });
+        this.selectedIndex = index;
+        console.log(`Activated index: ${index}`);
     }
 }

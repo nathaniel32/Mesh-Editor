@@ -18,7 +18,7 @@
             <h3>Mesh Editor</h3>
 
             <div v-for="(tool, index) in features.list" :key="index">
-                <button><i :class="tool.icon"></i></button>
+                <button @click="features.activate(index)"><i :class="tool.icon"></i> {{ tool.isActive }}</button>
             </div>
             
             <div class="control-group">
