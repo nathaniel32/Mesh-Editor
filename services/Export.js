@@ -1,7 +1,7 @@
 import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
-import { Menu } from '../models/Menu.js';
+import { Feature } from '../models/Feature.js';
 
-export class ExportService extends Menu{
+export class ExportService extends Feature{
     constructor(controller) {
         super("fa-solid fa-file-export");
         this.controller = controller;
