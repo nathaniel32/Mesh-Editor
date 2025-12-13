@@ -1,6 +1,6 @@
-export class Tools {
+export class Features {
     constructor() {
-        this.tools = [],
+        this.features = [],
         this.selectedIndex = 0
     }
 }

@@ -9,7 +9,7 @@ new Vue({
     el: '#app',
     data() {
         return {
-            tools: [],
+            features: [],
             cut_service: new CutTool(this),
             import_service: new ImportService(this),
             export_service: new ExportService(this),
@@ -55,7 +55,7 @@ new Vue({
         }
     },
     mounted() {
-        this.tools = [this.cut_service, this.import_service, this.export_service];
+        this.features = [this.cut_service, this.import_service, this.export_service];
         this.initScene();
         this.animate();
         this.setupDragSelection();
