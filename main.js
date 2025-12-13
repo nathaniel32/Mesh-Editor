@@ -53,12 +53,6 @@ new Vue({
             };
         }
     },
-    mounted() {
-        this.features.list = [this.import_service, this.export_service, this.cut_tool, this.move_tool, this.scale_tool];
-        this.container = this.$refs.canvasContainer;
-        this.initScene();
-        this.animate();
-    },
     methods: {
         ensureUVAttribute(geometry) {
             if (!geometry.attributes.uv) {
@@ -117,6 +111,12 @@ new Vue({
             this.controls.update();
             this.renderer.render(this.scene, this.camera);
         }
+    },
+    mounted() {
+        this.features.list = [this.import_service, this.export_service, this.cut_tool, this.move_tool, this.scale_tool];
+        this.container = this.$refs.canvasContainer;
+        this.initScene();
+        this.animate();
     },
     beforeDestroy() {
         window.removeEventListener('resize', this.handleResize);
