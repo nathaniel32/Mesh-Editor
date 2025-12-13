@@ -3,4 +3,8 @@ export class Features {
         this.list = [],
         this.selectedIndex = 0
     }
+
+    activate(index){
+        this.list[index].isActive = true;
+    }
 }
