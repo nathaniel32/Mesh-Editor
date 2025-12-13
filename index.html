@@ -33,11 +33,11 @@
                 <label>Mode:</label>
                 <div class="toggle-group">
                     <button class="toggle-btn" 
-                            :class="{ active: cut_service.mode === 'remove' }"
-                            @click="cut_service.setMode('remove')">Remove</button>
+                            :class="{ active: cut_tool.mode === 'remove' }"
+                            @click="cut_tool.setMode('remove')">Remove</button>
                     <button class="toggle-btn" 
-                            :class="{ active: cut_service.mode === 'keep' }"
-                            @click="cut_service.setMode('keep')">Keep</button>
+                            :class="{ active: cut_tool.mode === 'keep' }"
+                            @click="cut_tool.setMode('keep')">Keep</button>
                 </div>
             </div>
 
@@ -64,7 +64,7 @@
                         @click="previewCut">PREVIEW CUT</button>
                 
                 <div class="btn-row" v-show="isPreviewing">
-                    <button class="apply" @click="cut_service.applyCut">APPLY CUT</button>
+                    <button class="apply" @click="cut_tool.applyCut">APPLY CUT</button>
                     <button @click="cancelPreview">CANCEL</button>
                 </div>
                 

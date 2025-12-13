@@ -11,7 +11,7 @@ new Vue({
     data() {
         return {
             features: new Features(),
-            cut_service: new CutTool(this),
+            cut_tool: new CutTool(this),
             import_service: new ImportService(this),
             export_service: new ExportService(this),
             scene: null,
@@ -56,7 +56,7 @@ new Vue({
         }
     },
     mounted() {
-        this.features.list = [this.cut_service, this.import_service, this.export_service];
+        this.features.list = [this.cut_tool, this.import_service, this.export_service];
         this.initScene();
         this.animate();
         this.setupDragSelection();
@@ -147,7 +147,7 @@ new Vue({
                 this.controls.enabled = true;
                 this.selectionBox.visible = false;
                 
-                this.cut_service.createCuttingVolume();
+                this.cut_tool.createCuttingVolume();
             });
 
             container.addEventListener('contextmenu', (e) => {
@@ -182,7 +182,7 @@ new Vue({
 
             setTimeout(() => {
                 try {
-                    const operation = this.cut_service.mode === 'remove' ? HOLLOW_SUBTRACTION : HOLLOW_INTERSECTION;
+                    const operation = this.cut_tool.mode === 'remove' ? HOLLOW_SUBTRACTION : HOLLOW_INTERSECTION;
                     
                     const result = this.evaluator.evaluate(this.workingBrush, this.cutterBrush, operation);
                     
