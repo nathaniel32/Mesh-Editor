@@ -308,45 +308,6 @@ new Vue({
             }, 100);
         },
 
-        applyCut() {
-            if (!this.previewMesh) return;
-
-            if (this.workingMesh) {
-                this.scene.remove(this.workingMesh);
-            }
-
-            this.workingMesh = new THREE.Mesh(
-                this.previewMesh.geometry.clone(),
-                new THREE.MeshStandardMaterial({
-                    color: 0x3498db,
-                    side: THREE.DoubleSide
-                })
-            );
-            this.scene.add(this.workingMesh);
-
-            this.workingBrush = new Brush(this.previewMesh.geometry.clone());
-            this.workingBrush.updateMatrixWorld();
-
-            if (this.previewMesh) {
-                this.scene.remove(this.previewMesh);
-                this.previewMesh = null;
-            }
-
-            if (this.cutterMesh) {
-                this.scene.remove(this.cutterMesh);
-                this.cutterMesh = null;
-            }
-
-            this.cutterBrush = null;
-
-            this.cutCount++;
-            this.isPreviewing = false;
-            this.previewDisabled = false;
-            this.selectionInfo.visible = false;
-
-            this.statusText = `Cut #${this.cutCount} applied! Select again or EXPORT`;
-        },
-
         cancelPreview() {
             if (this.previewMesh) {
                 this.scene.remove(this.previewMesh);
