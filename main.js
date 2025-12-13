@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
-import { CutTool } from './tools/Cut.js';
 import { Features } from './models/DataClass.js';
-import { ImportService } from './services/Import.js';
-import { ExportService } from './services/Export.js';
+import { CutTool } from './features/tools/Cut.js';
+import { ImportService } from './features/Import.js';
+import { ExportService } from './features/Export.js';
 
 new Vue({
     el: '#app',

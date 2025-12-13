@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
-import { Feature } from '../models/Feature.js';
+import { Feature } from '../../models/Feature.js';
 
 export class CutTool extends Feature{
     constructor(controller) {
