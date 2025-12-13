@@ -68,7 +68,6 @@ export class CutTool extends Feature{
         this.controller.cutCount++;
         this.controller.isPreviewing = false;
         this.controller.previewDisabled = false;
-        this.controller.selectionInfo.visible = false;
 
         this.controller.statusText = `Cut #${this.controller.cutCount} applied! Select again or EXPORT`;
     }
@@ -167,9 +166,6 @@ export class CutTool extends Feature{
         this.controller.cutterBrush = new Brush(geometry);
         this.controller.cutterBrush.updateMatrixWorld();
 
-        this.controller.selectionInfo.visible = true;
-        const modeText = this.mode === 'remove' ? 'REMOVE' : 'KEEP';
-        this.controller.selectionInfo.text = `Mode: ${modeText}`;
         this.controller.statusText = 'Selection ready! Click PREVIEW';
     }
 }

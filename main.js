@@ -40,10 +40,6 @@ new Vue({
                 top: 0,
                 width: 0,
                 height: 0
-            },
-            selectionInfo: {
-                visible: false,
-                text: '-'
             }
         };
     },
