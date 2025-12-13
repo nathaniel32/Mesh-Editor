@@ -21,8 +21,6 @@ new Vue({
             importService: new ImportService(this),
             exportService: new ExportService(this),
             renderScene: new RenderScene(this),
-            scene: null,
-            camera: null,
             controls: null,
             workingMesh: null,
             workingBrush: null,

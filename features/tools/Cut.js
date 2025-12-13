@@ -27,7 +27,7 @@ export class CutTool extends Feature{
 
     cancelPreview() {
         if (this.controller.previewMesh) {
-            this.controller.scene.remove(this.controller.previewMesh);
+            this.controller.renderScene.scene.remove(this.controller.previewMesh);
             this.controller.previewMesh = null;
         }
 
@@ -63,7 +63,7 @@ export class CutTool extends Feature{
                 this.controller.workingMesh.visible = false;
                 
                 if (this.controller.previewMesh) {
-                    this.controller.scene.remove(this.controller.previewMesh);
+                    this.controller.renderScene.scene.remove(this.controller.previewMesh);
                 }
                 
                 this.controller.previewMesh = new THREE.Mesh(
@@ -73,7 +73,7 @@ export class CutTool extends Feature{
                         side: THREE.DoubleSide
                     })
                 );
-                this.controller.scene.add(this.controller.previewMesh);
+                this.controller.renderScene.scene.add(this.controller.previewMesh);
                 
                 this.controller.isPreviewing = true;
                 this.controller.statusText = 'Preview OK! APPLY or CANCEL';
@@ -100,7 +100,7 @@ export class CutTool extends Feature{
         if (!this.controller.previewMesh) return;
 
         if (this.controller.workingMesh) {
-            this.controller.scene.remove(this.controller.workingMesh);
+            this.controller.renderScene.scene.remove(this.controller.workingMesh);
         }
 
         this.controller.workingMesh = new THREE.Mesh(
@@ -110,18 +110,18 @@ export class CutTool extends Feature{
                 side: THREE.DoubleSide
             })
         );
-        this.controller.scene.add(this.controller.workingMesh);
+        this.controller.renderScene.scene.add(this.controller.workingMesh);
 
         this.controller.workingBrush = new Brush(this.controller.previewMesh.geometry.clone());
         this.controller.workingBrush.updateMatrixWorld();
 
         if (this.controller.previewMesh) {
-            this.controller.scene.remove(this.controller.previewMesh);
+            this.controller.renderScene.scene.remove(this.controller.previewMesh);
             this.controller.previewMesh = null;
         }
 
         if (this.controller.cutterMesh) {
-            this.controller.scene.remove(this.controller.cutterMesh);
+            this.controller.renderScene.scene.remove(this.controller.cutterMesh);
             this.controller.cutterMesh = null;
         }
 
@@ -154,14 +154,14 @@ export class CutTool extends Feature{
         const meshSize = meshBox.getSize(new THREE.Vector3());
         
         const centerNDC = new THREE.Vector2((ndcX1 + ndcX2) / 2, (ndcY1 + ndcY2) / 2);
-        raycaster.setFromCamera(centerNDC, this.controller.camera);
+        raycaster.setFromCamera(centerNDC, this.controller.renderScene.camera);
         const intersects = raycaster.intersectObject(this.controller.workingMesh);
         
         let centerDepth;
         if (intersects.length > 0) {
             centerDepth = intersects[0].distance;
         } else {
-            centerDepth = this.controller.camera.position.distanceTo(meshBox.getCenter(new THREE.Vector3()));
+            centerDepth = this.controller.renderScene.camera.position.distanceTo(meshBox.getCenter(new THREE.Vector3()));
         }
 
         const depth = meshSize.length() * 2;
@@ -178,7 +178,7 @@ export class CutTool extends Feature{
         const positions = [];
         
         for (const corner of corners) {
-            raycaster.setFromCamera(corner, this.controller.camera);
+            raycaster.setFromCamera(corner, this.controller.renderScene.camera);
             const point = raycaster.ray.origin.clone().add(
                 raycaster.ray.direction.clone().multiplyScalar(nearDist)
             );
@@ -186,7 +186,7 @@ export class CutTool extends Feature{
         }
         
         for (const corner of corners) {
-            raycaster.setFromCamera(corner, this.controller.camera);
+            raycaster.setFromCamera(corner, this.controller.renderScene.camera);
             const point = raycaster.ray.origin.clone().add(
                 raycaster.ray.direction.clone().multiplyScalar(farDist)
             );
@@ -210,7 +210,7 @@ export class CutTool extends Feature{
         this.controller.ensureUVAttribute(geometry);
 
         if (this.controller.cutterMesh) {
-            this.controller.scene.remove(this.controller.cutterMesh);
+            this.controller.renderScene.scene.remove(this.controller.cutterMesh);
         }
 
         const color = this.mode === 'remove' ? 0xff0000 : 0x00ff00;
@@ -223,7 +223,7 @@ export class CutTool extends Feature{
         });
         
         this.controller.cutterMesh = new THREE.Mesh(geometry, material);
-        this.controller.scene.add(this.controller.cutterMesh);
+        this.controller.renderScene.scene.add(this.controller.cutterMesh);
 
         this.controller.cutterBrush = new Brush(geometry);
         this.controller.cutterBrush.updateMatrixWorld();

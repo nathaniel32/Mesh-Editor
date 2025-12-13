@@ -32,7 +32,7 @@ export class ImportService extends Feature{
                 const loader = new OBJLoader();
                 const obj = loader.parse(e.target.result);
                 
-                if (this.controller.workingMesh) this.controller.scene.remove(this.controller.workingMesh);
+                if (this.controller.workingMesh) this.controller.renderScene.scene.remove(this.controller.workingMesh);
 
                 const geometries = [];
                 obj.traverse((child) => {
@@ -71,10 +71,10 @@ export class ImportService extends Feature{
                     })
                 );
 
-                this.controller.scene.add(this.controller.workingMesh);
+                this.controller.renderScene.scene.add(this.controller.workingMesh);
 
                 const size = box.getSize(new THREE.Vector3()).length();
-                this.controller.camera.position.set(size, size, size);
+                this.controller.renderScene.camera.position.set(size, size, size);
                 this.controller.controls.target.set(0, 0, 0);
                 this.controller.controls.update();
 
