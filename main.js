@@ -157,21 +157,6 @@ new Vue({
             }, 100);
         },
 
-        cancelPreview() {
-            if (this.previewMesh) {
-                this.scene.remove(this.previewMesh);
-                this.previewMesh = null;
-            }
-
-            if (this.workingMesh) {
-                this.workingMesh.visible = true;
-            }
-
-            this.isPreviewing = false;
-            this.previewDisabled = false;
-            this.statusText = 'Cancelled. Select again';
-        },
-
         animate() {
             requestAnimationFrame(this.animate);
             this.controls.update();

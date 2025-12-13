@@ -9,6 +9,7 @@ export class CutTool extends Feature{
         this.controller = controller;
         this.mode = 'remove';
         this.applyCut = this.applyCut.bind(this);
+        this.cancelPreview = this.cancelPreview.bind(this);
         this.selection = new SelectionBox(controller);
     }
 
@@ -21,6 +22,21 @@ export class CutTool extends Feature{
     //override
     deactivate(){
         this.isActive = false;
+    }
+
+    cancelPreview() {
+        if (this.controller.previewMesh) {
+            this.controller.scene.remove(this.controller.previewMesh);
+            this.controller.previewMesh = null;
+        }
+
+        if (this.controller.workingMesh) {
+            this.controller.workingMesh.visible = true;
+        }
+
+        this.controller.isPreviewing = false;
+        this.controller.previewDisabled = false;
+        this.controller.statusText = 'Cancelled. Select again';
     }
 
     setMode(mode) {

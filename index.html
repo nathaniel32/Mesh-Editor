@@ -56,7 +56,7 @@
                 
                 <div class="btn-row" v-show="isPreviewing">
                     <button class="apply" @click="cut_tool.applyCut">APPLY CUT</button>
-                    <button @click="cancelPreview">CANCEL</button>
+                    <button @click="cut_tool.cancelPreview">CANCEL</button>
                 </div>
                 
                 <button v-show="cutCount > 0 && !isPreviewing" 
