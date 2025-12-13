@@ -1,7 +1,11 @@
+import * as THREE from 'three';
+import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
+
 export class CutService {
     constructor(controller) {
         this.controller = controller;
         this.mode = 'remove';
+        this.applyCut = this.applyCut.bind(this);
     }
 
     setMode(mode) {
@@ -19,7 +23,7 @@ export class CutService {
         if (!this.controller.previewMesh) return;
 
         if (this.controller.workingMesh) {
-            this.scene.remove(this.controller.workingMesh);
+            this.controller.scene.remove(this.controller.workingMesh);
         }
 
         this.controller.workingMesh = new THREE.Mesh(
