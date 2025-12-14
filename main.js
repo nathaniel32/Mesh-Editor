@@ -1,9 +1,9 @@
 import { FeaturesState, EditorState, StatusState } from './models/DataClass.js';
-import { CutTool } from './features/edit/Cut.js';
-import { MoveTool } from './features/edit/Move.js';
-import { ScaleTool } from './features/edit/Scale.js';
-import { ImportTool } from './features/file/Import.js';
-import { ExportTool } from './features/file/Export.js';
+import { CutTool } from './tools/edit/Cut.js';
+import { MoveTool } from './tools/edit/Move.js';
+import { ScaleTool } from './tools/edit/Scale.js';
+import { ImportTool } from './tools/file/Import.js';
+import { ExportTool } from './tools/file/Export.js';
 import { RenderScene } from './system/RenderScene.js';
 import { SelectionBox } from './system/SelectionBox.js';
 
