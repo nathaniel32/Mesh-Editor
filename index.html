@@ -17,25 +17,31 @@
         <div id="controls">
             <h3>Mesh Editor</h3>
             
-            File
-            <div v-for="(tool, index) in fileToolsState.list" :key="tool.name">
-                <button @click="fileToolsState.toggle(index)" :class="{ active: tool.isActive }">
-                    <i :class="tool.icon"></i> {{ tool.name }}
-                </button>
+            <div>
+                File
+                <div v-for="(tool, index) in fileToolsState.list" :key="tool.name">
+                    <button @click="fileToolsState.toggle(index)" :class="{ active: tool.isActive }">
+                        <i :class="tool.icon"></i> {{ tool.name }}
+                    </button>
+                </div>
+            </div>
+            
+            <div>
+                Selection
+                <div v-for="(tool, index) in selectionToolsState.list" :key="tool.name">
+                    <button @click="selectionToolsState.toggle(index)" :class="{ active: tool.isActive }">
+                        <i :class="tool.icon"></i> {{ tool.name }}
+                    </button>
+                </div>
             </div>
 
-            Selection
-            <div v-for="(tool, index) in selectionToolsState.list" :key="tool.name">
-                <button @click="selectionToolsState.toggle(index)" :class="{ active: tool.isActive }">
-                    <i :class="tool.icon"></i> {{ tool.name }}
-                </button>
-            </div>
-
-            Edit
-            <div v-for="(tool, index) in editorToolsState.list" :key="tool.name">
-                <button @click="editorToolsState.toggle(index)" :class="{ active: tool.isActive }">
-                    <i :class="tool.icon"></i> {{ tool.name }}
-                </button>
+            <div>
+                Edit
+                <div v-for="(tool, index) in editorToolsState.list" :key="tool.name">
+                    <button @click="editorToolsState.toggle(index)" :class="{ active: tool.isActive }">
+                        <i :class="tool.icon"></i> {{ tool.name }}
+                    </button>
+                </div>
             </div>
             
             <div v-if="importTool.isActive" class="control-group">
