@@ -3,6 +3,7 @@ import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
 import { Feature } from '../../models/Feature.js';
+import { ensureUVAttribute } from '../../utils/mesh.js';
 
 export class ImportService extends Feature{
     constructor(controller) {
@@ -39,14 +40,14 @@ export class ImportService extends Feature{
                     if (child.isMesh) {
                         const clonedGeometry = child.geometry.clone();
                         clonedGeometry.applyMatrix4(child.matrixWorld);
-                        this.controller.ensureUVAttribute(clonedGeometry);
+                        ensureUVAttribute(clonedGeometry);
                         geometries.push(clonedGeometry);
                     }
                 });
 
                 const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries);
                 mergedGeometry.computeVertexNormals();
-                this.controller.ensureUVAttribute(mergedGeometry);
+                ensureUVAttribute(mergedGeometry);
                 
                 const box = new THREE.Box3().setFromBufferAttribute(mergedGeometry.attributes.position);
                 const center = box.getCenter(new THREE.Vector3());

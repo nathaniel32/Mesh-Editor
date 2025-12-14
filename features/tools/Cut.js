@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
 import { Feature } from '../../models/Feature.js';
+import { ensureUVAttribute } from '../../utils/mesh.js';
 
 export class CutTool extends Feature{
     constructor(controller) {
@@ -213,7 +214,7 @@ export class CutTool extends Feature{
         
         geometry.setIndex(indices);
         geometry.computeVertexNormals();
-        this.controller.ensureUVAttribute(geometry);
+        ensureUVAttribute(geometry);
 
         if (this.cutterMesh) {
             this.controller.renderScene.scene.remove(this.cutterMesh);
