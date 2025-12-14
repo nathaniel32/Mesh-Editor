@@ -20,11 +20,11 @@ export class ExportTool extends Tool{
     }
 
     exportMesh() {
-        if (!this.controller.editorState.workingMesh) return;
+        if (!this.controller.fileState.workingMesh) return;
                 
         try {
             const exporter = new OBJExporter();
-            const objString = exporter.parse(this.controller.editorState.workingMesh);
+            const objString = exporter.parse(this.controller.fileState.workingMesh);
 
             const blob = new Blob([objString], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);

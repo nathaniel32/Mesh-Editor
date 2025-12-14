@@ -40,8 +40,8 @@ export class CutTool extends Tool{
             this.cutterMesh = null;
         }
 
-        if (this.controller.editorState.workingMesh) {
-            this.controller.editorState.workingMesh.visible = true;
+        if (this.controller.fileState.workingMesh) {
+            this.controller.fileState.workingMesh.visible = true;
         }
 
         this.cutterBrush = null;
@@ -50,7 +50,7 @@ export class CutTool extends Tool{
     }
 
     previewCut() {
-        if (!this.controller.editorState.workingBrush) {
+        if (!this.controller.fileState.workingBrush) {
             console.log('Load the OBJ file first!');
             return;
         }
@@ -66,9 +66,9 @@ export class CutTool extends Tool{
             try {
                 const operation = this.mode === 'remove' ? HOLLOW_SUBTRACTION : HOLLOW_INTERSECTION;
                 
-                const result = this.evaluator.evaluate(this.controller.editorState.workingBrush, this.cutterBrush, operation);
+                const result = this.evaluator.evaluate(this.controller.fileState.workingBrush, this.cutterBrush, operation);
                 
-                this.controller.editorState.workingMesh.visible = false;
+                this.controller.fileState.workingMesh.visible = false;
                 
                 if (this.previewMesh) {
                     this.controller.renderScene.scene.remove(this.previewMesh);
@@ -107,21 +107,21 @@ export class CutTool extends Tool{
     applyCut() {
         if (!this.previewMesh) return;
 
-        if (this.controller.editorState.workingMesh) {
-            this.controller.renderScene.scene.remove(this.controller.editorState.workingMesh);
+        if (this.controller.fileState.workingMesh) {
+            this.controller.renderScene.scene.remove(this.controller.fileState.workingMesh);
         }
 
-        this.controller.editorState.workingMesh = new THREE.Mesh(
+        this.controller.fileState.workingMesh = new THREE.Mesh(
             this.previewMesh.geometry.clone(),
             new THREE.MeshStandardMaterial({
                 color: 0x3498db,
                 side: THREE.DoubleSide
             })
         );
-        this.controller.renderScene.scene.add(this.controller.editorState.workingMesh);
+        this.controller.renderScene.scene.add(this.controller.fileState.workingMesh);
 
-        this.controller.editorState.workingBrush = new Brush(this.previewMesh.geometry.clone());
-        this.controller.editorState.workingBrush.updateMatrixWorld();
+        this.controller.fileState.workingBrush = new Brush(this.previewMesh.geometry.clone());
+        this.controller.fileState.workingBrush.updateMatrixWorld();
 
         if (this.previewMesh) {
             this.controller.renderScene.scene.remove(this.previewMesh);
@@ -140,7 +140,7 @@ export class CutTool extends Tool{
     }
 
     createCuttingVolume() {
-        if (!this.controller.editorState.workingMesh || !this.isActive) return;
+        if (!this.controller.fileState.workingMesh || !this.isActive) return;
 
         const containerRect = this.controller.$refs.canvasContainer.getBoundingClientRect();
 
@@ -155,12 +155,12 @@ export class CutTool extends Tool{
         const ndcY2 = -((y2 - containerRect.top) / containerRect.height) * 2 + 1;
 
         const raycaster = new THREE.Raycaster();
-        const meshBox = new THREE.Box3().setFromObject(this.controller.editorState.workingMesh);
+        const meshBox = new THREE.Box3().setFromObject(this.controller.fileState.workingMesh);
         const meshSize = meshBox.getSize(new THREE.Vector3());
         
         const centerNDC = new THREE.Vector2((ndcX1 + ndcX2) / 2, (ndcY1 + ndcY2) / 2);
         raycaster.setFromCamera(centerNDC, this.controller.renderScene.camera);
-        const intersects = raycaster.intersectObject(this.controller.editorState.workingMesh);
+        const intersects = raycaster.intersectObject(this.controller.fileState.workingMesh);
         
         let centerDepth;
         if (intersects.length > 0) {

@@ -1,17 +1,19 @@
-import { ToolsState, EditorState, StatusState } from './models/DataClass.js';
+import { ToolsState } from './state/ToolState.js';
+import { StatusState } from './state/StatusState.js';
+import { FileState } from './state/FileState.js';
 import { CutTool } from './tools/edit/Cut.js';
 import { MoveTool } from './tools/edit/Move.js';
 import { ScaleTool } from './tools/edit/Scale.js';
 import { ImportTool } from './tools/file/Import.js';
 import { ExportTool } from './tools/file/Export.js';
-import { RenderScene } from './system/RenderScene.js';
-import { SelectionBox } from './system/SelectionBox.js';
+import { SelectionBoxTool } from './tools/selection/SelectionBox.js';
+import { RenderScene } from './core/RenderScene.js';
 
 new Vue({
     el: '#app',
     data() {
         return {
-            selectionBox: new SelectionBox(this),
+            selectionBox: new SelectionBoxTool(this),
             cutTool: new CutTool(this),
             moveTool: new MoveTool(this),
             scaleTool: new ScaleTool(this),
@@ -19,7 +21,7 @@ new Vue({
             exportTool: new ExportTool(this),
             renderScene: new RenderScene(this),
             toolsState: new ToolsState(),
-            editorState: new EditorState(),
+            fileState: new FileState(),
             statusState: new StatusState()
         };
     },
@@ -36,7 +38,7 @@ new Vue({
     methods: {},
     mounted() {
         this.toolsState.list = [this.importTool, this.exportTool, this.cutTool, this.moveTool, this.scaleTool];
-        this.editorState.container = this.$refs.canvasContainer;
+        this.fileState.container = this.$refs.canvasContainer;
         this.renderScene.initScene();
         this.renderScene.animate();
         this.selectionBox.setupDragSelection();

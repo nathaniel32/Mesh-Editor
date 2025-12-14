@@ -13,21 +13,21 @@ export class RenderScene {
     }
 
     handleResize() {
-        this.camera.aspect = this.controller.editorState.container.clientWidth / this.controller.editorState.container.clientHeight;
+        this.camera.aspect = this.controller.fileState.container.clientWidth / this.controller.fileState.container.clientHeight;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(this.controller.editorState.container.clientWidth, this.controller.editorState.container.clientHeight);
+        this.renderer.setSize(this.controller.fileState.container.clientWidth, this.controller.fileState.container.clientHeight);
     }
 
     initScene() {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x1a1a1a);
 
-        this.camera = new THREE.PerspectiveCamera(75, this.controller.editorState.container.clientWidth / this.controller.editorState.container.clientHeight, 0.1, 10000);
+        this.camera = new THREE.PerspectiveCamera(75, this.controller.fileState.container.clientWidth / this.controller.fileState.container.clientHeight, 0.1, 10000);
         this.camera.position.set(3, 3, 3);
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.setSize(this.controller.editorState.container.clientWidth, this.controller.editorState.container.clientHeight);
-        this.controller.editorState.container.appendChild(this.renderer.domElement);
+        this.renderer.setSize(this.controller.fileState.container.clientWidth, this.controller.fileState.container.clientHeight);
+        this.controller.fileState.container.appendChild(this.renderer.domElement);
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;

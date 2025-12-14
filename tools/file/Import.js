@@ -32,7 +32,7 @@ export class ImportTool extends Tool{
                 const loader = new OBJLoader();
                 const obj = loader.parse(e.target.result);
                 
-                if (this.controller.editorState.workingMesh) this.controller.renderScene.scene.remove(this.controller.editorState.workingMesh);
+                if (this.controller.fileState.workingMesh) this.controller.renderScene.scene.remove(this.controller.fileState.workingMesh);
 
                 const geometries = [];
                 obj.traverse((child) => {
@@ -60,10 +60,10 @@ export class ImportTool extends Tool{
                     );
                 }
                 
-                this.controller.editorState.workingBrush = new Brush(mergedGeometry);
-                this.controller.editorState.workingBrush.updateMatrixWorld();
+                this.controller.fileState.workingBrush = new Brush(mergedGeometry);
+                this.controller.fileState.workingBrush.updateMatrixWorld();
 
-                this.controller.editorState.workingMesh = new THREE.Mesh(
+                this.controller.fileState.workingMesh = new THREE.Mesh(
                     mergedGeometry,
                     new THREE.MeshStandardMaterial({
                         color: 0x3498db,
@@ -71,7 +71,7 @@ export class ImportTool extends Tool{
                     })
                 );
 
-                this.controller.renderScene.scene.add(this.controller.editorState.workingMesh);
+                this.controller.renderScene.scene.add(this.controller.fileState.workingMesh);
 
                 const size = box.getSize(new THREE.Vector3()).length();
                 this.controller.renderScene.camera.position.set(size, size, size);
