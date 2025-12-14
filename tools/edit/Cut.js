@@ -11,79 +11,54 @@ export class CutTool extends Tool{
         this.applyCut = this.applyCut.bind(this);
         this.cancelPreview = this.cancelPreview.bind(this);
         this.evaluator = new Evaluator();
-        this.previewMesh = null;
-        this.cutterMesh = null;
-        this.cutterBrush = null;
+        this.previewMesh = null; // Mesh for showing preview
+        this.cutterMesh = null;  // Mesh representing the cutter volume
+        this.cutterBrush = null; // Brush for CSG operations
         this.isPreviewing = false;
         this.previewDisabled = false;
         state.add(this);
     }
 
-    //override
     activate(){
-        this.isActive = true;
+        this.isActive = true; // Enable tool
     }
 
-    //override
     deactivate(){
         this.isActive = false;
-        this.cancelPreview();
+        this.cancelPreview(); // Remove any preview when deactivating
     }
 
     cancelPreview() {
-        if (this.previewMesh) {
-            this.controller.renderScene.scene.remove(this.previewMesh);
-            this.previewMesh = null;
-        }
-
-        if (this.cutterMesh) {
-            this.controller.renderScene.scene.remove(this.cutterMesh);
-            this.cutterMesh = null;
-        }
-
-        if (this.controller.fileState.workingMesh) {
-            this.controller.fileState.workingMesh.visible = true;
-        }
-
+        // Remove preview and cutter meshes
+        if (this.previewMesh) this.controller.renderScene.scene.remove(this.previewMesh);
+        if (this.cutterMesh) this.controller.renderScene.scene.remove(this.cutterMesh);
+        if (this.controller.fileState.workingMesh) this.controller.fileState.workingMesh.visible = true;
         this.cutterBrush = null;
         this.isPreviewing = false;
         this.previewDisabled = false;
     }
 
     previewCut() {
-        if (!this.controller.fileState.workingBrush) {
-            console.log('Load the OBJ file first!');
-            return;
-        }
-
-        if (!this.cutterBrush) {
-            console.log('Right click + drag to select area!');
-            return;
-        }
+        if (!this.controller.fileState.workingBrush || !this.cutterBrush) return;
 
         this.previewDisabled = true;
 
         setTimeout(() => {
             try {
                 const operation = this.mode === 'remove' ? HOLLOW_SUBTRACTION : HOLLOW_INTERSECTION;
-                
                 const result = this.evaluator.evaluate(this.controller.fileState.workingBrush, this.cutterBrush, operation);
-                
+
                 this.controller.fileState.workingMesh.visible = false;
                 
-                if (this.previewMesh) {
-                    this.controller.renderScene.scene.remove(this.previewMesh);
-                }
-                
-                this.previewMesh = new THREE.Mesh(
-                    result.geometry,
-                    new THREE.MeshStandardMaterial({
-                        color: 0xf39c12,
-                        side: THREE.DoubleSide
-                    })
-                );
+                if (this.previewMesh) this.controller.renderScene.scene.remove(this.previewMesh);
+
+                // Show preview mesh
+                this.previewMesh = new THREE.Mesh(result.geometry, new THREE.MeshStandardMaterial({
+                    color: 0xf39c12,
+                    side: THREE.DoubleSide
+                }));
                 this.controller.renderScene.scene.add(this.previewMesh);
-                
+
                 this.isPreviewing = true;
                 this.controller.statusState.add('Preview OK! APPLY or CANCEL');
             } catch (err) {
@@ -96,46 +71,33 @@ export class CutTool extends Tool{
 
     setMode(mode) {        
         this.mode = mode;
-        
         if (this.cutterMesh) {
             const color = mode === 'remove' ? 0xff0000 : 0x00ff00;
-            this.cutterMesh.material.color.setHex(color);
+            this.cutterMesh.material.color.setHex(color); // Update cutter color
         }
-
         this.previewCut();
     }
 
     applyCut() {
         if (!this.previewMesh) return;
 
-        if (this.controller.fileState.workingMesh) {
-            this.controller.renderScene.scene.remove(this.controller.fileState.workingMesh);
-        }
+        // Apply the preview result to the working mesh
+        if (this.controller.fileState.workingMesh) this.controller.renderScene.scene.remove(this.controller.fileState.workingMesh);
 
         this.controller.fileState.workingMesh = new THREE.Mesh(
             this.previewMesh.geometry.clone(),
-            new THREE.MeshStandardMaterial({
-                color: 0x3498db,
-                side: THREE.DoubleSide
-            })
+            new THREE.MeshStandardMaterial({ color: 0x3498db, side: THREE.DoubleSide })
         );
         this.controller.renderScene.scene.add(this.controller.fileState.workingMesh);
 
+        // Update the working brush for future operations
         this.controller.fileState.workingBrush = new Brush(this.previewMesh.geometry.clone());
         this.controller.fileState.workingBrush.updateMatrixWorld();
 
-        if (this.previewMesh) {
-            this.controller.renderScene.scene.remove(this.previewMesh);
-            this.previewMesh = null;
-        }
-
-        if (this.cutterMesh) {
-            this.controller.renderScene.scene.remove(this.cutterMesh);
-            this.cutterMesh = null;
-        }
-
+        // Cleanup preview and cutter
+        if (this.previewMesh) this.controller.renderScene.scene.remove(this.previewMesh);
+        if (this.cutterMesh) this.controller.renderScene.scene.remove(this.cutterMesh);
         this.cutterBrush = null;
-
         this.isPreviewing = false;
         this.previewDisabled = false;
     }
@@ -145,6 +107,7 @@ export class CutTool extends Tool{
 
         const containerRect = this.controller.$refs.canvasContainer.getBoundingClientRect();
 
+        // Convert selection box to normalized device coordinates
         const x1 = Math.min(this.controller.selectionBoxTool.dragStart.x, this.controller.selectionBoxTool.dragEnd.x);
         const y1 = Math.min(this.controller.selectionBoxTool.dragStart.y, this.controller.selectionBoxTool.dragEnd.y);
         const x2 = Math.max(this.controller.selectionBoxTool.dragStart.x, this.controller.selectionBoxTool.dragEnd.x);
@@ -158,22 +121,17 @@ export class CutTool extends Tool{
         const raycaster = new THREE.Raycaster();
         const meshBox = new THREE.Box3().setFromObject(this.controller.fileState.workingMesh);
         const meshSize = meshBox.getSize(new THREE.Vector3());
-        
+
         const centerNDC = new THREE.Vector2((ndcX1 + ndcX2) / 2, (ndcY1 + ndcY2) / 2);
         raycaster.setFromCamera(centerNDC, this.controller.renderScene.camera);
         const intersects = raycaster.intersectObject(this.controller.fileState.workingMesh);
-        
-        let centerDepth;
-        if (intersects.length > 0) {
-            centerDepth = intersects[0].distance;
-        } else {
-            centerDepth = this.controller.renderScene.camera.position.distanceTo(meshBox.getCenter(new THREE.Vector3()));
-        }
+        const centerDepth = intersects.length > 0 ? intersects[0].distance : this.controller.renderScene.camera.position.distanceTo(meshBox.getCenter(new THREE.Vector3()));
 
         const depth = meshSize.length() * 2;
         const nearDist = Math.max(0.1, centerDepth - depth);
         const farDist = centerDepth + depth;
 
+        // Create corner points for the cutting volume
         const corners = [
             new THREE.Vector2(ndcX1, ndcY1),
             new THREE.Vector2(ndcX2, ndcY1),
@@ -182,58 +140,43 @@ export class CutTool extends Tool{
         ];
 
         const positions = [];
-        
         for (const corner of corners) {
             raycaster.setFromCamera(corner, this.controller.renderScene.camera);
-            const point = raycaster.ray.origin.clone().add(
-                raycaster.ray.direction.clone().multiplyScalar(nearDist)
-            );
-            positions.push(point.x, point.y, point.z);
+            positions.push(...raycaster.ray.origin.clone().add(raycaster.ray.direction.clone().multiplyScalar(nearDist)).toArray());
         }
-        
         for (const corner of corners) {
             raycaster.setFromCamera(corner, this.controller.renderScene.camera);
-            const point = raycaster.ray.origin.clone().add(
-                raycaster.ray.direction.clone().multiplyScalar(farDist)
-            );
-            positions.push(point.x, point.y, point.z);
+            positions.push(...raycaster.ray.origin.clone().add(raycaster.ray.direction.clone().multiplyScalar(farDist)).toArray());
         }
 
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
-        
+
+        // Define faces of the cube volume
         const indices = [
-            0, 2, 1,  0, 3, 2,
-            4, 5, 6,  4, 6, 7,
-            0, 1, 5,  0, 5, 4,
-            3, 7, 6,  3, 6, 2,
-            0, 4, 7,  0, 7, 3,
-            1, 2, 6,  1, 6, 5
+            0, 2, 1, 0, 3, 2,
+            4, 5, 6, 4, 6, 7,
+            0, 1, 5, 0, 5, 4,
+            3, 7, 6, 3, 6, 2,
+            0, 4, 7, 0, 7, 3,
+            1, 2, 6, 1, 6, 5
         ];
-        
         geometry.setIndex(indices);
         geometry.computeVertexNormals();
         ensureUVAttribute(geometry);
 
-        if (this.cutterMesh) {
-            this.controller.renderScene.scene.remove(this.cutterMesh);
-        }
+        if (this.cutterMesh) this.controller.renderScene.scene.remove(this.cutterMesh);
 
+        // Create transparent cutter mesh for visualization
         const color = this.mode === 'remove' ? 0xff0000 : 0x00ff00;
-        const material = new THREE.MeshBasicMaterial({
-            color: color,
-            transparent: true,
-            opacity: 0.4,
-            side: THREE.DoubleSide,
-            depthWrite: false
-        });
-        
+        const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.4, side: THREE.DoubleSide, depthWrite: false });
+
         this.cutterMesh = new THREE.Mesh(geometry, material);
         this.controller.renderScene.scene.add(this.cutterMesh);
 
-        this.cutterBrush = new Brush(geometry);
+        this.cutterBrush = new Brush(geometry); // For CSG
         this.cutterBrush.updateMatrixWorld();
 
-        this.previewCut();
+        this.previewCut(); // Show preview immediately
     }
 }
