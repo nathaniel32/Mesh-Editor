@@ -78,7 +78,6 @@ export class ImportService extends Feature{
                 this.controller.renderScene.controls.target.set(0, 0, 0);
                 this.controller.renderScene.controls.update();
 
-                this.controller.cutCount = 0;
                 this.controller.statusText = 'Data successfully imported';
                 this.deactivate();
             } catch (err) {

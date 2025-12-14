@@ -41,13 +41,6 @@
                 </div>
             </div>
 
-            <div class="control-group" 
-                 v-show="cutCount > 0">
-                <div class="value-display">
-                    <strong>Cuts applied:</strong> {{ cutCount }}
-                </div>
-            </div>
-
             <div class="control-group">                
                 <div class="btn-row" v-show="cutTool.isPreviewing">
                     <button class="apply" @click="cutTool.applyCut">APPLY CUT</button>

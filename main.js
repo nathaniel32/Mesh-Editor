@@ -24,8 +24,6 @@ new Vue({
             renderScene: new RenderScene(this),
             workingMesh: null,
             workingBrush: null,
-            
-            cutCount: 0,
             statusText: ''
         };
     },
