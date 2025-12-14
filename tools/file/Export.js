@@ -3,8 +3,9 @@ import { Tool } from '../../models/Tool.js';
 
 export class ExportTool extends Tool{
     constructor(controller, state) {
-        super("fa-solid fa-file-export", "Export", state);
+        super("fa-solid fa-file-export", "Export");
         this.controller = controller;
+        state.add(this);
     }
 
     //override

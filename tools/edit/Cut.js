@@ -5,7 +5,7 @@ import { ensureUVAttribute } from '../../utils/mesh.js';
 
 export class CutTool extends Tool{
     constructor(controller, state) {
-        super("fa-solid fa-scissors", "Cut", state);
+        super("fa-solid fa-scissors", "Cut");
         this.controller = controller;
         this.mode = 'remove';
         this.applyCut = this.applyCut.bind(this);
@@ -16,6 +16,7 @@ export class CutTool extends Tool{
         this.cutterBrush = null;
         this.isPreviewing = false;
         this.previewDisabled = false;
+        state.add(this);
     }
 
     //override

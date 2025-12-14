@@ -2,7 +2,7 @@ import { Tool } from '../../models/Tool.js';
 
 export class SelectionBoxTool extends Tool{
     constructor(controller, state) {
-        super("fa-regular fa-square", "Box", state);
+        super("fa-regular fa-square", "Box");
         this.controller = controller;
         this.isDragging = false;
         this.dragStart = null;
@@ -14,6 +14,7 @@ export class SelectionBoxTool extends Tool{
             width: 0,
             height: 0
         }
+        state.add(this);
     }
 
     //override

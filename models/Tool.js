@@ -1,9 +1,8 @@
 export class Tool {
-    constructor(icon, name, state) {
+    constructor(icon, name) {
         this.icon = icon;
         this.name = name;
         this.isActive = false;
-        state.add(this);
     }
 
     toggle(){

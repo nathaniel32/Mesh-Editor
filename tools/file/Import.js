@@ -7,9 +7,10 @@ import { ensureUVAttribute } from '../../utils/mesh.js';
 
 export class ImportTool extends Tool{
     constructor(controller, state) {
-        super("fa-solid fa-file-import", "Import", state);
+        super("fa-solid fa-file-import", "Import");
         this.controller = controller;
         this.loadOBJ = this.loadOBJ.bind(this);
+        state.add(this);
     }
 
     //override
