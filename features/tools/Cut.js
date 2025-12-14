@@ -4,7 +4,7 @@ import { Feature } from '../../models/Feature.js';
 
 export class CutTool extends Feature{
     constructor(controller) {
-        super("fa-solid fa-scissors");
+        super("fa-solid fa-scissors", "Cut");
         this.controller = controller;
         this.mode = 'remove';
         this.applyCut = this.applyCut.bind(this);

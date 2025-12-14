@@ -6,7 +6,7 @@ import { Feature } from '../../models/Feature.js';
 
 export class ImportService extends Feature{
     constructor(controller) {
-        super("fa-solid fa-file-import");
+        super("fa-solid fa-file-import", "Import");
         this.controller = controller;
         this.loadOBJ = this.loadOBJ.bind(this);
     }

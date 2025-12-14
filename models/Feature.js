@@ -1,6 +1,7 @@
 export class Feature {
-    constructor(icon) {
+    constructor(icon, name) {
         this.icon = icon,
+        this.name = name,
         this.isActive = false
     }
 

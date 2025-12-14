@@ -3,7 +3,7 @@ import { Feature } from '../../models/Feature.js';
 
 export class ExportService extends Feature{
     constructor(controller) {
-        super("fa-solid fa-file-export");
+        super("fa-solid fa-file-export", "Export");
         this.controller = controller;
     }
 

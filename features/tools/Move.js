@@ -2,7 +2,7 @@ import { Feature } from '../../models/Feature.js';
 
 export class MoveTool extends Feature{
     constructor(controller) {
-        super("fa-solid fa-arrows-up-down-left-right");
+        super("fa-solid fa-arrows-up-down-left-right", "Move");
         this.controller = controller;
     }
 
