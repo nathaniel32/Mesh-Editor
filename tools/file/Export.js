@@ -2,8 +2,8 @@ import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
 import { Tool } from '../../models/Tool.js';
 
 export class ExportTool extends Tool{
-    constructor(controller) {
-        super("fa-solid fa-file-export", "Export");
+    constructor(controller, state) {
+        super("fa-solid fa-file-export", "Export", state);
         this.controller = controller;
     }
 

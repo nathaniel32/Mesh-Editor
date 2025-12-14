@@ -1,4 +1,4 @@
-import { EditorToolsState } from './state/ToolState.js';
+import { ToolsState } from './state/ToolState.js';
 import { StatusState } from './state/StatusState.js';
 import { FileState } from './state/FileState.js';
 import { CutTool } from './tools/edit/Cut.js';
@@ -13,16 +13,18 @@ new Vue({
     el: '#app',
     data() {
         return {
-            selectionBox: new SelectionBoxTool(this),
-            cutTool: new CutTool(this),
-            moveTool: new MoveTool(this),
-            scaleTool: new ScaleTool(this),
-            importTool: new ImportTool(this),
-            exportTool: new ExportTool(this),
             renderScene: new RenderScene(this),
-            editorToolsState: new EditorToolsState(),
             fileState: new FileState(),
-            statusState: new StatusState()
+            statusState: new StatusState(),
+            editorToolsState: new ToolsState(),
+            fileToolsState: new ToolsState(),
+            selectionToolsState: new ToolsState(),
+            selectionBox: new SelectionBoxTool(this),
+            cutTool: null,
+            moveTool: null,
+            scaleTool: null,
+            importTool: null,
+            exportTool: null
         };
     },
     computed: {
@@ -36,8 +38,17 @@ new Vue({
         }
     },
     methods: {},
+    created() {
+        this.renderScene = new RenderScene(this);
+        this.importTool = new ImportTool(this, this.fileToolsState);
+        this.exportTool = new ExportTool(this, this.fileToolsState);
+        this.selectionBox = new SelectionBoxTool(this, this.selectionToolsState);
+        this.cutTool = new CutTool(this, this.editorToolsState);
+        this.moveTool = new MoveTool(this, this.editorToolsState);
+        this.scaleTool = new ScaleTool(this, this.editorToolsState);
+    },
     mounted() {
-        this.editorToolsState.list = [this.importTool, this.exportTool, this.cutTool, this.moveTool, this.scaleTool];
+        //this.editorToolsState.list = [this.importTool, this.exportTool, this.cutTool, this.moveTool, this.scaleTool];
         this.fileState.container = this.$refs.canvasContainer;
         this.renderScene.initScene();
         this.renderScene.animate();

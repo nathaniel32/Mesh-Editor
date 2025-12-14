@@ -1,8 +1,8 @@
 import { Tool } from '../../models/Tool.js';
 
 export class ScaleTool extends Tool{
-    constructor(controller) {
-        super("fa-solid fa-expand", "Scale");
+    constructor(controller, state) {
+        super("fa-solid fa-expand", "Scale", state);
         this.controller = controller;
     }
 

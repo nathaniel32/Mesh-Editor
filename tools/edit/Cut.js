@@ -4,8 +4,8 @@ import { Tool } from '../../models/Tool.js';
 import { ensureUVAttribute } from '../../utils/mesh.js';
 
 export class CutTool extends Tool{
-    constructor(controller) {
-        super("fa-solid fa-scissors", "Cut");
+    constructor(controller, state) {
+        super("fa-solid fa-scissors", "Cut", state);
         this.controller = controller;
         this.mode = 'remove';
         this.applyCut = this.applyCut.bind(this);

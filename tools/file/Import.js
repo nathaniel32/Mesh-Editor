@@ -6,8 +6,8 @@ import { Tool } from '../../models/Tool.js';
 import { ensureUVAttribute } from '../../utils/mesh.js';
 
 export class ImportTool extends Tool{
-    constructor(controller) {
-        super("fa-solid fa-file-import", "Import");
+    constructor(controller, state) {
+        super("fa-solid fa-file-import", "Import", state);
         this.controller = controller;
         this.loadOBJ = this.loadOBJ.bind(this);
     }
