@@ -23,21 +23,17 @@ export class SelectionBox {
         this.box.top = y1;
         this.box.width = x2 - x1;
         this.box.height = y2 - y1;
-
-        console.log("TEST", this.box.left);
+        this.box.visible = true;
     }
 
     setupDragSelection() {
         this.controller.container.addEventListener('mousedown', (e) => {
-            if (e.button !== 2 || !this.controller.workingMesh) return;
-            console.log("TEST", this.box.left);
+            if (e.button !== 2) return;
             e.preventDefault();
             this.isDragging = true;
             this.controller.renderScene.controls.enabled = false;
             this.dragStart = { x: e.clientX, y: e.clientY };
             this.dragEnd = { x: e.clientX, y: e.clientY };
-            
-            this.box.visible = true;
         });
 
         this.controller.container.addEventListener('mousemove', (e) => {
