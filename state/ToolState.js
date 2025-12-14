@@ -1,4 +1,4 @@
-export class ToolsState {
+export class EditorToolsState {
     constructor() {
         this.list = [],
         this.selectedIndex = 0

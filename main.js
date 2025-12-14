@@ -1,4 +1,4 @@
-import { ToolsState } from './state/ToolState.js';
+import { EditorToolsState } from './state/ToolState.js';
 import { StatusState } from './state/StatusState.js';
 import { FileState } from './state/FileState.js';
 import { CutTool } from './tools/edit/Cut.js';
@@ -20,7 +20,7 @@ new Vue({
             importTool: new ImportTool(this),
             exportTool: new ExportTool(this),
             renderScene: new RenderScene(this),
-            toolsState: new ToolsState(),
+            editorToolsState: new EditorToolsState(),
             fileState: new FileState(),
             statusState: new StatusState()
         };
@@ -37,7 +37,7 @@ new Vue({
     },
     methods: {},
     mounted() {
-        this.toolsState.list = [this.importTool, this.exportTool, this.cutTool, this.moveTool, this.scaleTool];
+        this.editorToolsState.list = [this.importTool, this.exportTool, this.cutTool, this.moveTool, this.scaleTool];
         this.fileState.container = this.$refs.canvasContainer;
         this.renderScene.initScene();
         this.renderScene.animate();
