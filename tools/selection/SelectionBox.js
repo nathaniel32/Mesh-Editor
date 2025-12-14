@@ -25,11 +25,13 @@ export class SelectionBoxTool extends Tool {
 
     activate() {
         this.isActive = true;
+        this.controller.fileState.container.style.cursor = 'crosshair';
         this.setupDragSelection();
     }
 
     deactivate() {
         this.isActive = false;
+        this.controller.fileState.container.style.cursor = 'default';
         this.removeDragSelection();
     }
 

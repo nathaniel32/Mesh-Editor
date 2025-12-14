@@ -1,7 +1,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: Arial, sans-serif; overflow: hidden; background: #1a1a1a; }
 #app { width: 100vw; height: 100vh; display: flex; }
-#canvas-container { flex: 1; position: relative; cursor: crosshair; }
+#canvas-container { flex: 1; position: relative; cursor: grab; }
 #controls { width: 280px; padding: 20px; background: #2c3e50; color: white; overflow-y: auto; }
 .control-group { margin-bottom: 20px; }
 .control-group label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
