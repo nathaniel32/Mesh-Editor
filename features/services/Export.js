@@ -20,13 +20,13 @@ export class ExportService extends Feature{
     }
 
     exportMesh() {
-        if (!this.controller.workingMesh) return;
+        if (!this.controller.editorState.workingMesh) return;
         
         this.controller.statusText = 'Exporting...';
         
         try {
             const exporter = new OBJExporter();
-            const objString = exporter.parse(this.controller.workingMesh);
+            const objString = exporter.parse(this.controller.editorState.workingMesh);
 
             const blob = new Blob([objString], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);

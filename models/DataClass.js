@@ -16,3 +16,11 @@ export class Features {
         console.log(`Activated index: ${index}`);
     }
 }
+
+export class EditorState {
+    constructor() {
+        this.container = null;
+        this.workingMesh = null;
+        this.workingBrush = null;
+    }
+}

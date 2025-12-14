@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
-import { Features } from './models/DataClass.js';
+import { Features, EditorState } from './models/DataClass.js';
 import { CutTool } from './features/tools/Cut.js';
 import { MoveTool } from './features/tools/Move.js';
 import { ScaleTool } from './features/tools/Scale.js';
@@ -21,9 +21,7 @@ new Vue({
             importService: new ImportService(this),
             exportService: new ExportService(this),
             renderScene: new RenderScene(this),
-            container: null,
-            workingMesh: null,
-            workingBrush: null,
+            editorState: new EditorState(this),
             statusText: ''
         };
     },
@@ -40,7 +38,7 @@ new Vue({
     methods: {},
     mounted() {
         this.features.list = [this.importService, this.exportService, this.cutTool, this.moveTool, this.scaleTool];
-        this.container = this.$refs.canvasContainer;
+        this.editorState.container = this.$refs.canvasContainer;
         this.renderScene.initScene();
         this.renderScene.animate();
         this.selectionBox.setupDragSelection();

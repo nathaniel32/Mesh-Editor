@@ -27,7 +27,7 @@ export class SelectionBox {
     }
 
     setupDragSelection() {
-        this.controller.container.addEventListener('mousedown', (e) => {
+        this.controller.editorState.container.addEventListener('mousedown', (e) => {
             if (e.button !== 2) return;
             e.preventDefault();
             this.isDragging = true;
@@ -36,7 +36,7 @@ export class SelectionBox {
             this.dragEnd = { x: e.clientX, y: e.clientY };
         });
 
-        this.controller.container.addEventListener('mousemove', (e) => {
+        this.controller.editorState.container.addEventListener('mousemove', (e) => {
             if (!this.isDragging) return;
             
             e.preventDefault();
@@ -44,7 +44,7 @@ export class SelectionBox {
             this.updateSelectionBoxUI();
         });
 
-        this.controller.container.addEventListener('mouseup', (e) => {
+        this.controller.editorState.container.addEventListener('mouseup', (e) => {
             if (!this.isDragging) return;
             
             e.preventDefault();
@@ -55,7 +55,7 @@ export class SelectionBox {
             this.controller.cutTool.createCuttingVolume();
         });
 
-        this.controller.container.addEventListener('contextmenu', (e) => {
+        this.controller.editorState.container.addEventListener('contextmenu', (e) => {
             e.preventDefault();
         });
     }
