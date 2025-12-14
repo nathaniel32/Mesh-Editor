@@ -33,6 +33,11 @@ export class CutTool extends Feature{
             this.previewMesh = null;
         }
 
+        if (this.cutterMesh) {
+            this.controller.renderScene.scene.remove(this.cutterMesh);
+            this.cutterMesh = null;
+        }
+
         if (this.controller.workingMesh) {
             this.controller.workingMesh.visible = true;
         }
@@ -134,8 +139,6 @@ export class CutTool extends Feature{
         this.controller.cutCount++;
         this.isPreviewing = false;
         this.previewDisabled = false;
-
-        this.controller.statusText = `Cut #${this.controller.cutCount} applied! Select again or EXPORT`;
     }
 
     createCuttingVolume() {
