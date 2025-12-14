@@ -5,7 +5,7 @@ import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW
 import { Feature } from '../../models/Feature.js';
 import { ensureUVAttribute } from '../../utils/mesh.js';
 
-export class ImportService extends Feature{
+export class ImportTool extends Feature{
     constructor(controller) {
         super("fa-solid fa-file-import", "Import");
         this.controller = controller;

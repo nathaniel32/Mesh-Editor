@@ -1,9 +1,9 @@
 import { FeaturesState, EditorState, StatusState } from './models/DataClass.js';
-import { CutTool } from './features/tools/Cut.js';
-import { MoveTool } from './features/tools/Move.js';
-import { ScaleTool } from './features/tools/Scale.js';
-import { ImportService } from './features/services/Import.js';
-import { ExportService } from './features/services/Export.js';
+import { CutTool } from './features/edit/Cut.js';
+import { MoveTool } from './features/edit/Move.js';
+import { ScaleTool } from './features/edit/Scale.js';
+import { ImportTool } from './features/file/Import.js';
+import { ExportTool } from './features/file/Export.js';
 import { RenderScene } from './system/RenderScene.js';
 import { SelectionBox } from './system/SelectionBox.js';
 
@@ -15,8 +15,8 @@ new Vue({
             cutTool: new CutTool(this),
             moveTool: new MoveTool(this),
             scaleTool: new ScaleTool(this),
-            importService: new ImportService(this),
-            exportService: new ExportService(this),
+            importTool: new ImportTool(this),
+            exportTool: new ExportTool(this),
             renderScene: new RenderScene(this),
             featuresState: new FeaturesState(),
             editorState: new EditorState(),
@@ -35,7 +35,7 @@ new Vue({
     },
     methods: {},
     mounted() {
-        this.featuresState.list = [this.importService, this.exportService, this.cutTool, this.moveTool, this.scaleTool];
+        this.featuresState.list = [this.importTool, this.exportTool, this.cutTool, this.moveTool, this.scaleTool];
         this.editorState.container = this.$refs.canvasContainer;
         this.renderScene.initScene();
         this.renderScene.animate();

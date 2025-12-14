@@ -23,11 +23,11 @@
                 </button>
             </div>
             
-            <div v-if="importService.isActive" class="control-group">
+            <div v-if="importTool.isActive" class="control-group">
                 <label>Load OBJ:</label>
                 <input type="file" 
                        accept=".obj"
-                       @change="importService.loadOBJ"
+                       @change="importTool.loadOBJ"
                        ref="fileInput">
             </div>
 
