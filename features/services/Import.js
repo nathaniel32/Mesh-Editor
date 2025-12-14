@@ -79,9 +79,7 @@ export class ImportService extends Feature{
                 this.controller.renderScene.controls.update();
 
                 this.controller.cutCount = 0;
-
-                this.controller.statusText = 'Loaded! Klik kanan + drag';
-                setTimeout(() => this.controller.statusText = '', 3000);
+                this.deactivate();
             } catch (err) {
                 this.controller.statusText = 'Error: ' + err.message;
                 console.error(err);

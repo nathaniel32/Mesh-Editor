@@ -21,7 +21,7 @@
                 <button @click="features.toggle(index)"><i :class="tool.icon"></i> {{ tool.isActive }}</button>
             </div>
             
-            <div class="control-group">
+            <div v-if="importService.isActive" class="control-group">
                 <label>Load OBJ:</label>
                 <input type="file" 
                        accept=".obj"
