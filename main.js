@@ -22,12 +22,9 @@ new Vue({
             renderScene: new RenderScene(this),
             workingMesh: null,
             workingBrush: null,
-            cutterMesh: null,
-            cutterBrush: null,
             
             cutCount: 0,
             statusText: '',
-            isPreviewing: false,
             previewDisabled: false,
             selectionBox: {
                 visible: false,

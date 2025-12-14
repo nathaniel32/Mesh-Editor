@@ -14,6 +14,9 @@ export class CutTool extends Feature{
         this.selection = new SelectionBox(controller);
         this.evaluator = new Evaluator();
         this.previewMesh = null;
+        this.cutterMesh = null;
+        this.cutterBrush = null;
+        this.isPreviewing = false;
     }
 
     //override
@@ -37,7 +40,7 @@ export class CutTool extends Feature{
             this.controller.workingMesh.visible = true;
         }
 
-        this.controller.isPreviewing = false;
+        this.isPreviewing = false;
         this.controller.previewDisabled = false;
         this.controller.statusText = 'Cancelled. Select again';
     }
@@ -48,7 +51,7 @@ export class CutTool extends Feature{
             return;
         }
 
-        if (!this.controller.cutterBrush) {
+        if (!this.cutterBrush) {
             alert('Klik kanan + drag untuk select area!');
             return;
         }
@@ -60,7 +63,7 @@ export class CutTool extends Feature{
             try {
                 const operation = this.mode === 'remove' ? HOLLOW_SUBTRACTION : HOLLOW_INTERSECTION;
                 
-                const result = this.evaluator.evaluate(this.controller.workingBrush, this.controller.cutterBrush, operation);
+                const result = this.evaluator.evaluate(this.controller.workingBrush, this.cutterBrush, operation);
                 
                 this.controller.workingMesh.visible = false;
                 
@@ -77,7 +80,7 @@ export class CutTool extends Feature{
                 );
                 this.controller.renderScene.scene.add(this.previewMesh);
                 
-                this.controller.isPreviewing = true;
+                this.isPreviewing = true;
                 this.controller.statusText = 'Preview OK! APPLY or CANCEL';
             } catch (err) {
                 this.controller.statusText = 'Error: ' + err.message;
@@ -92,9 +95,9 @@ export class CutTool extends Feature{
         
         this.mode = mode;
         
-        if (this.controller.cutterMesh) {
+        if (this.cutterMesh) {
             const color = mode === 'remove' ? 0xff0000 : 0x00ff00;
-            this.controller.cutterMesh.material.color.setHex(color);
+            this.cutterMesh.material.color.setHex(color);
         }
     }
 
@@ -122,15 +125,15 @@ export class CutTool extends Feature{
             this.previewMesh = null;
         }
 
-        if (this.controller.cutterMesh) {
-            this.controller.renderScene.scene.remove(this.controller.cutterMesh);
-            this.controller.cutterMesh = null;
+        if (this.cutterMesh) {
+            this.controller.renderScene.scene.remove(this.cutterMesh);
+            this.cutterMesh = null;
         }
 
-        this.controller.cutterBrush = null;
+        this.cutterBrush = null;
 
         this.controller.cutCount++;
-        this.controller.isPreviewing = false;
+        this.isPreviewing = false;
         this.controller.previewDisabled = false;
 
         this.controller.statusText = `Cut #${this.controller.cutCount} applied! Select again or EXPORT`;
@@ -211,8 +214,8 @@ export class CutTool extends Feature{
         geometry.computeVertexNormals();
         this.controller.ensureUVAttribute(geometry);
 
-        if (this.controller.cutterMesh) {
-            this.controller.renderScene.scene.remove(this.controller.cutterMesh);
+        if (this.cutterMesh) {
+            this.controller.renderScene.scene.remove(this.cutterMesh);
         }
 
         const color = this.mode === 'remove' ? 0xff0000 : 0x00ff00;
@@ -224,11 +227,11 @@ export class CutTool extends Feature{
             depthWrite: false
         });
         
-        this.controller.cutterMesh = new THREE.Mesh(geometry, material);
-        this.controller.renderScene.scene.add(this.controller.cutterMesh);
+        this.cutterMesh = new THREE.Mesh(geometry, material);
+        this.controller.renderScene.scene.add(this.cutterMesh);
 
-        this.controller.cutterBrush = new Brush(geometry);
-        this.controller.cutterBrush.updateMatrixWorld();
+        this.cutterBrush = new Brush(geometry);
+        this.cutterBrush.updateMatrixWorld();
 
         this.controller.statusText = 'Selection ready! Click PREVIEW';
     }

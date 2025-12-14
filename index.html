@@ -50,16 +50,16 @@
 
             <div class="control-group">
                 <button class="cut" 
-                        v-show="!isPreviewing"
+                        v-show="!cutTool.isPreviewing"
                         :disabled="previewDisabled"
                         @click="cutTool.previewCut">PREVIEW CUT</button>
                 
-                <div class="btn-row" v-show="isPreviewing">
+                <div class="btn-row" v-show="cutTool.isPreviewing">
                     <button class="apply" @click="cutTool.applyCut">APPLY CUT</button>
                     <button @click="cutTool.cancelPreview">CANCEL</button>
                 </div>
                 
-                <button v-show="cutCount > 0 && !isPreviewing" 
+                <button v-show="cutCount > 0 && !cutTool.isPreviewing" 
                         @click="exportService.exportMesh">EXPORT OBJ</button>
                             
                 <div id="status">{{ statusText }}</div>
