@@ -9,6 +9,7 @@ export class RenderScene {
         this.scene = null;
         this.camera = null;
         this.controls = null;
+        this.handleResize = this.handleResize.bind(this);
     }
 
     handleResize() {
