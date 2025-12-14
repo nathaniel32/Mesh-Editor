@@ -51,6 +51,5 @@ new Vue({
         this.fileState.container = this.$refs.canvasContainer;
         this.renderScene.initScene();
         this.renderScene.animate();
-        this.selectionBoxTool.setupDragSelection();
     }
 });
