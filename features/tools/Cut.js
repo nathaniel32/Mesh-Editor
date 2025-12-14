@@ -136,7 +136,6 @@ export class CutTool extends Feature{
 
         this.cutterBrush = null;
 
-        this.controller.cutCount++;
         this.isPreviewing = false;
         this.previewDisabled = false;
     }

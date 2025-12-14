@@ -32,11 +32,11 @@ export class ExportService extends Feature{
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `cut_mesh_${this.controller.cutCount}cuts_${Date.now()}.obj`;
+            a.download = `data_${Date.now()}.obj`;
             a.click();
             URL.revokeObjectURL(url);
 
-            this.controller.statusText = `Exported with ${this.controller.cutCount} cuts!`;
+            this.controller.statusText = 'Exported';
             setTimeout(() => this.controller.statusText = '', 2000);
         } catch (err) {
             this.controller.statusText = 'Export error: ' + err.message;
