@@ -17,8 +17,8 @@
         <div id="controls">
             <h3>Mesh Editor</h3>
 
-            <div v-for="(tool, index) in features.list" :key="index">
-                <button @click="features.toggle(index)" :class="{ active: tool.isActive }">
+            <div v-for="(tool, index) in featuresState.list" :key="index">
+                <button @click="featuresState.toggle(index)" :class="{ active: tool.isActive }">
                     <i :class="tool.icon"></i> {{ tool.name }}
                 </button>
             </div>

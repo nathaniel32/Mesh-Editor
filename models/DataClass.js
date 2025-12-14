@@ -1,4 +1,4 @@
-export class Features {
+export class FeaturesState {
     constructor() {
         this.list = [],
         this.selectedIndex = 0
