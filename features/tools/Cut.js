@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
 import { Feature } from '../../models/Feature.js';
-import { SelectionBox } from '../../system/SelectionBox.js';
 
 export class CutTool extends Feature{
     constructor(controller) {
@@ -11,7 +10,6 @@ export class CutTool extends Feature{
         this.applyCut = this.applyCut.bind(this);
         this.cancelPreview = this.cancelPreview.bind(this);
         this.previewCut = this.previewCut.bind(this);
-        this.selection = new SelectionBox(controller);
         this.evaluator = new Evaluator();
         this.previewMesh = null;
         this.cutterMesh = null;
@@ -23,7 +21,6 @@ export class CutTool extends Feature{
     //override
     activate(){
         this.isActive = true;
-        this.selection.setupDragSelection();
     }
 
     //override
@@ -145,10 +142,10 @@ export class CutTool extends Feature{
 
         const containerRect = this.controller.$refs.canvasContainer.getBoundingClientRect();
 
-        const x1 = Math.min(this.selection.dragStart.x, this.selection.dragEnd.x);
-        const y1 = Math.min(this.selection.dragStart.y, this.selection.dragEnd.y);
-        const x2 = Math.max(this.selection.dragStart.x, this.selection.dragEnd.x);
-        const y2 = Math.max(this.selection.dragStart.y, this.selection.dragEnd.y);
+        const x1 = Math.min(this.controller.selectionBox.dragStart.x, this.controller.selectionBox.dragEnd.x);
+        const y1 = Math.min(this.controller.selectionBox.dragStart.y, this.controller.selectionBox.dragEnd.y);
+        const x2 = Math.max(this.controller.selectionBox.dragStart.x, this.controller.selectionBox.dragEnd.x);
+        const y2 = Math.max(this.controller.selectionBox.dragStart.y, this.controller.selectionBox.dragEnd.y);
 
         const ndcX1 = ((x1 - containerRect.left) / containerRect.width) * 2 - 1;
         const ndcY1 = -((y1 - containerRect.top) / containerRect.height) * 2 + 1;

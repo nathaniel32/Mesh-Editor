@@ -7,12 +7,14 @@ import { ScaleTool } from './features/tools/Scale.js';
 import { ImportService } from './features/services/Import.js';
 import { ExportService } from './features/services/Export.js';
 import { RenderScene } from './system/RenderScene.js';
+import { SelectionBox } from './system/SelectionBox.js';
 
 new Vue({
     el: '#app',
     data() {
         return {
             container: null,
+            selectionBox: new SelectionBox(this),
             features: new Features(),
             cutTool: new CutTool(this),
             moveTool: new MoveTool(this),
@@ -24,23 +26,16 @@ new Vue({
             workingBrush: null,
             
             cutCount: 0,
-            statusText: '',
-            selectionBox: {
-                visible: false,
-                left: 0,
-                top: 0,
-                width: 0,
-                height: 0
-            }
+            statusText: ''
         };
     },
     computed: {
         selectionBoxStyle() {
             return {
-                left: this.selectionBox.left + 'px',
-                top: this.selectionBox.top + 'px',
-                width: this.selectionBox.width + 'px',
-                height: this.selectionBox.height + 'px'
+                left: this.selectionBox.box.left + 'px',
+                top: this.selectionBox.box.top + 'px',
+                width: this.selectionBox.box.width + 'px',
+                height: this.selectionBox.box.height + 'px'
             };
         }
     },
@@ -65,5 +60,6 @@ new Vue({
         this.container = this.$refs.canvasContainer;
         this.renderScene.initScene();
         this.renderScene.animate();
+        this.selectionBox.setupDragSelection();
     }
 });
