@@ -16,6 +16,16 @@ export class SelectionBoxTool extends Tool{
         }
     }
 
+    //override
+    activate(){
+        this.isActive = true;
+    }
+
+    //override
+    deactivate(){
+        this.isActive = false;
+    }
+
     updateSelectionBoxUI() {
         const x1 = Math.min(this.dragStart.x, this.dragEnd.x);
         const y1 = Math.min(this.dragStart.y, this.dragEnd.y);
