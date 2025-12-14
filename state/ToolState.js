@@ -1,7 +1,7 @@
 export class ToolsState {
     constructor() {
-        this.list = [],
-        this.selectedIndex = 0
+        this.list = [];
+        this.selectedIndex = 0;
     }
 
     toggle(index){
