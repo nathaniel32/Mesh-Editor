@@ -2,10 +2,10 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
-import { Feature } from '../../models/Feature.js';
+import { Tool } from '../../models/Tool.js';
 import { ensureUVAttribute } from '../../utils/mesh.js';
 
-export class ImportTool extends Feature{
+export class ImportTool extends Tool{
     constructor(controller) {
         super("fa-solid fa-file-import", "Import");
         this.controller = controller;

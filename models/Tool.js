@@ -1,4 +1,4 @@
-export class Feature {
+export class Tool {
     constructor(icon, name) {
         this.icon = icon,
         this.name = name,

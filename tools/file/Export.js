@@ -1,7 +1,7 @@
 import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
-import { Feature } from '../../models/Feature.js';
+import { Tool } from '../../models/Tool.js';
 
-export class ExportTool extends Feature{
+export class ExportTool extends Tool{
     constructor(controller) {
         super("fa-solid fa-file-export", "Export");
         this.controller = controller;

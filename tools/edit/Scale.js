@@ -1,6 +1,6 @@
-import { Feature } from '../../models/Feature.js';
+import { Tool } from '../../models/Tool.js';
 
-export class ScaleTool extends Feature{
+export class ScaleTool extends Tool{
     constructor(controller) {
         super("fa-solid fa-expand", "Scale");
         this.controller = controller;

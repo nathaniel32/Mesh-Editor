@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
-import { Feature } from '../../models/Feature.js';
+import { Tool } from '../../models/Tool.js';
 import { ensureUVAttribute } from '../../utils/mesh.js';
 
-export class CutTool extends Feature{
+export class CutTool extends Tool{
     constructor(controller) {
         super("fa-solid fa-scissors", "Cut");
         this.controller = controller;
