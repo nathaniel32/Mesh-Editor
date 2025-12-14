@@ -1,5 +1,8 @@
-export class SelectionBoxTool {
-    constructor(controller) {
+import { Tool } from '../../models/Tool.js';
+
+export class SelectionBoxTool extends Tool{
+    constructor(controller, state) {
+        super("fa-regular fa-square", "Box", state);
         this.controller = controller;
         this.isDragging = false;
         this.dragStart = null;

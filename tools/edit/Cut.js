@@ -144,10 +144,10 @@ export class CutTool extends Tool{
 
         const containerRect = this.controller.$refs.canvasContainer.getBoundingClientRect();
 
-        const x1 = Math.min(this.controller.selectionBox.dragStart.x, this.controller.selectionBox.dragEnd.x);
-        const y1 = Math.min(this.controller.selectionBox.dragStart.y, this.controller.selectionBox.dragEnd.y);
-        const x2 = Math.max(this.controller.selectionBox.dragStart.x, this.controller.selectionBox.dragEnd.x);
-        const y2 = Math.max(this.controller.selectionBox.dragStart.y, this.controller.selectionBox.dragEnd.y);
+        const x1 = Math.min(this.controller.selectionBoxTool.dragStart.x, this.controller.selectionBoxTool.dragEnd.x);
+        const y1 = Math.min(this.controller.selectionBoxTool.dragStart.y, this.controller.selectionBoxTool.dragEnd.y);
+        const x2 = Math.max(this.controller.selectionBoxTool.dragStart.x, this.controller.selectionBoxTool.dragEnd.x);
+        const y2 = Math.max(this.controller.selectionBoxTool.dragStart.y, this.controller.selectionBoxTool.dragEnd.y);
 
         const ndcX1 = ((x1 - containerRect.left) / containerRect.width) * 2 - 1;
         const ndcY1 = -((y1 - containerRect.top) / containerRect.height) * 2 + 1;

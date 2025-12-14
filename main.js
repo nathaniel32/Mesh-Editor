@@ -19,7 +19,7 @@ new Vue({
             editorToolsState: new ToolsState(),
             fileToolsState: new ToolsState(),
             selectionToolsState: new ToolsState(),
-            selectionBox: new SelectionBoxTool(this),
+            selectionBoxTool: null,
             cutTool: null,
             moveTool: null,
             scaleTool: null,
@@ -30,19 +30,18 @@ new Vue({
     computed: {
         selectionBoxStyle() {
             return {
-                left: this.selectionBox.box.left + 'px',
-                top: this.selectionBox.box.top + 'px',
-                width: this.selectionBox.box.width + 'px',
-                height: this.selectionBox.box.height + 'px'
+                left: this.selectionBoxTool.box.left + 'px',
+                top: this.selectionBoxTool.box.top + 'px',
+                width: this.selectionBoxTool.box.width + 'px',
+                height: this.selectionBoxTool.box.height + 'px'
             };
         }
     },
     methods: {},
     created() {
-        this.renderScene = new RenderScene(this);
         this.importTool = new ImportTool(this, this.fileToolsState);
         this.exportTool = new ExportTool(this, this.fileToolsState);
-        this.selectionBox = new SelectionBoxTool(this, this.selectionToolsState);
+        this.selectionBoxTool = new SelectionBoxTool(this, this.selectionToolsState);
         this.cutTool = new CutTool(this, this.editorToolsState);
         this.moveTool = new MoveTool(this, this.editorToolsState);
         this.scaleTool = new ScaleTool(this, this.editorToolsState);
@@ -52,6 +51,6 @@ new Vue({
         this.fileState.container = this.$refs.canvasContainer;
         this.renderScene.initScene();
         this.renderScene.animate();
-        this.selectionBox.setupDragSelection();
+        this.selectionBoxTool.setupDragSelection();
     }
 });
