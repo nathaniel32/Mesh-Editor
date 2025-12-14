@@ -47,7 +47,7 @@ export class CutTool extends Feature{
         this.cutterBrush = null;
         this.isPreviewing = false;
         this.previewDisabled = false;
-        this.controller.statusText = 'Cancelled. Select again';
+        this.controller.statusState.add('Cancelled. Select again');
     }
 
     previewCut() {
@@ -61,7 +61,6 @@ export class CutTool extends Feature{
             return;
         }
 
-        this.controller.statusText = 'Calculating preview...';
         this.previewDisabled = true;
 
         setTimeout(() => {
@@ -86,9 +85,9 @@ export class CutTool extends Feature{
                 this.controller.renderScene.scene.add(this.previewMesh);
                 
                 this.isPreviewing = true;
-                this.controller.statusText = 'Preview OK! APPLY or CANCEL';
+                this.controller.statusState.add('Preview OK! APPLY or CANCEL');
             } catch (err) {
-                this.controller.statusText = 'Error: ' + err.message;
+                this.controller.statusState.add('Error: ' + err.message);
                 console.error('CSG Error:', err);
                 this.previewDisabled = false;
             }

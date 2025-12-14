@@ -48,8 +48,10 @@
                     <button class="apply" @click="cutTool.applyCut">APPLY CUT</button>
                     <button @click="cutTool.cancelPreview">CANCEL</button>
                 </div>
-                                            
-                <div id="status">{{ statusText }}</div>
+                
+                <div v-for="(status, index) in statusState.list" :key="index">
+                    <div class="status">{{ status }}</div>
+                </div>
             </div>
         </div>
     </div>

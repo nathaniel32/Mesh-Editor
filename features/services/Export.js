@@ -22,7 +22,7 @@ export class ExportService extends Feature{
     exportMesh() {
         if (!this.controller.editorState.workingMesh) return;
         
-        this.controller.statusText = 'Exporting...';
+        this.controller.statusState.add('Exporting...');
         
         try {
             const exporter = new OBJExporter();
@@ -36,10 +36,9 @@ export class ExportService extends Feature{
             a.click();
             URL.revokeObjectURL(url);
 
-            this.controller.statusText = 'Exported';
-            setTimeout(() => this.controller.statusText = '', 2000);
+            this.controller.statusState.add('Exported');
         } catch (err) {
-            this.controller.statusText = 'Export error: ' + err.message;
+            this.controller.statusState.add('Export error: ' + err.message);
             console.error(err);
         }
     }

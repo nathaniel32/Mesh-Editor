@@ -26,7 +26,6 @@ export class ImportService extends Feature{
         const file = event.target.files[0];
         if (!file) return;
 
-        this.controller.statusText = 'Loading...';
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
@@ -79,10 +78,10 @@ export class ImportService extends Feature{
                 this.controller.renderScene.controls.target.set(0, 0, 0);
                 this.controller.renderScene.controls.update();
 
-                this.controller.statusText = 'Data successfully imported';
+                this.controller.statusState.add('Data successfully imported');
                 this.deactivate();
             } catch (err) {
-                this.controller.statusText = 'Error: ' + err.message;
+                this.controller.statusState.add('Error: ' + err.message);
                 console.error(err);
             }
         };

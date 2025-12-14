@@ -1,4 +1,4 @@
-import { FeaturesState, EditorState } from './models/DataClass.js';
+import { FeaturesState, EditorState, StatusState } from './models/DataClass.js';
 import { CutTool } from './features/tools/Cut.js';
 import { MoveTool } from './features/tools/Move.js';
 import { ScaleTool } from './features/tools/Scale.js';
@@ -12,15 +12,15 @@ new Vue({
     data() {
         return {
             selectionBox: new SelectionBox(this),
-            featuresState: new FeaturesState(),
             cutTool: new CutTool(this),
             moveTool: new MoveTool(this),
             scaleTool: new ScaleTool(this),
             importService: new ImportService(this),
             exportService: new ExportService(this),
             renderScene: new RenderScene(this),
-            editorState: new EditorState(this),
-            statusText: ''
+            featuresState: new FeaturesState(),
+            editorState: new EditorState(),
+            statusState: new StatusState()
         };
     },
     computed: {
