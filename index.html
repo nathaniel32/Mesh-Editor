@@ -58,10 +58,7 @@
                     <button class="apply" @click="cutTool.applyCut">APPLY CUT</button>
                     <button @click="cutTool.cancelPreview">CANCEL</button>
                 </div>
-                
-                <button v-show="cutCount > 0 && !cutTool.isPreviewing" 
-                        @click="exportService.exportMesh">EXPORT OBJ</button>
-                            
+                                            
                 <div id="status">{{ statusText }}</div>
             </div>
         </div>
