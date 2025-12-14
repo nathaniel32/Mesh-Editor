@@ -21,9 +21,7 @@ export class ExportService extends Feature{
 
     exportMesh() {
         if (!this.controller.editorState.workingMesh) return;
-        
-        this.controller.statusState.add('Exporting...');
-        
+                
         try {
             const exporter = new OBJExporter();
             const objString = exporter.parse(this.controller.editorState.workingMesh);
