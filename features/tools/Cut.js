@@ -47,7 +47,6 @@ export class CutTool extends Feature{
         this.cutterBrush = null;
         this.isPreviewing = false;
         this.previewDisabled = false;
-        this.controller.statusState.add('Cancelled. Select again');
     }
 
     previewCut() {
