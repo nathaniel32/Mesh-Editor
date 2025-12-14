@@ -25,6 +25,7 @@ export class CutTool extends Feature{
     //override
     deactivate(){
         this.isActive = false;
+        this.cancelPreview();
     }
 
     cancelPreview() {
@@ -42,6 +43,7 @@ export class CutTool extends Feature{
             this.controller.workingMesh.visible = true;
         }
 
+        this.cutterBrush = null;
         this.isPreviewing = false;
         this.previewDisabled = false;
         this.controller.statusText = 'Cancelled. Select again';
@@ -49,12 +51,12 @@ export class CutTool extends Feature{
 
     previewCut() {
         if (!this.controller.workingBrush) {
-            alert('Load the OBJ file first!');
+            console.log('Load the OBJ file first!');
             return;
         }
 
         if (!this.cutterBrush) {
-            alert('Right click + drag to select area!');
+            console.log('Right click + drag to select area!');
             return;
         }
 
@@ -92,9 +94,7 @@ export class CutTool extends Feature{
         }, 100);
     }
 
-    setMode(mode) {
-        console.log(mode);
-        
+    setMode(mode) {        
         this.mode = mode;
         
         if (this.cutterMesh) {
@@ -142,7 +142,7 @@ export class CutTool extends Feature{
     }
 
     createCuttingVolume() {
-        if (!this.controller.workingMesh) return;
+        if (!this.controller.workingMesh || !this.isActive) return;
 
         const containerRect = this.controller.$refs.canvasContainer.getBoundingClientRect();
 
