@@ -17,6 +17,7 @@ export class CutTool extends Feature{
         this.cutterMesh = null;
         this.cutterBrush = null;
         this.isPreviewing = false;
+        this.previewDisabled = false;
     }
 
     //override
@@ -41,7 +42,7 @@ export class CutTool extends Feature{
         }
 
         this.isPreviewing = false;
-        this.controller.previewDisabled = false;
+        this.previewDisabled = false;
         this.controller.statusText = 'Cancelled. Select again';
     }
 
@@ -57,7 +58,7 @@ export class CutTool extends Feature{
         }
 
         this.controller.statusText = 'Calculating preview...';
-        this.controller.previewDisabled = true;
+        this.previewDisabled = true;
 
         setTimeout(() => {
             try {
@@ -85,7 +86,7 @@ export class CutTool extends Feature{
             } catch (err) {
                 this.controller.statusText = 'Error: ' + err.message;
                 console.error('CSG Error:', err);
-                this.controller.previewDisabled = false;
+                this.previewDisabled = false;
             }
         }, 100);
     }
@@ -134,7 +135,7 @@ export class CutTool extends Feature{
 
         this.controller.cutCount++;
         this.isPreviewing = false;
-        this.controller.previewDisabled = false;
+        this.previewDisabled = false;
 
         this.controller.statusText = `Cut #${this.controller.cutCount} applied! Select again or EXPORT`;
     }

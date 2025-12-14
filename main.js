@@ -25,7 +25,6 @@ new Vue({
             
             cutCount: 0,
             statusText: '',
-            previewDisabled: false,
             selectionBox: {
                 visible: false,
                 left: 0,

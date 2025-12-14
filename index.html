@@ -51,7 +51,7 @@
             <div class="control-group">
                 <button class="cut" 
                         v-show="!cutTool.isPreviewing"
-                        :disabled="previewDisabled"
+                        :disabled="cutTool.previewDisabled"
                         @click="cutTool.previewCut">PREVIEW CUT</button>
                 
                 <div class="btn-row" v-show="cutTool.isPreviewing">
