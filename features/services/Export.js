@@ -5,12 +5,13 @@ export class ExportService extends Feature{
     constructor(controller) {
         super("fa-solid fa-file-export");
         this.controller = controller;
-        this.exportMesh = this.exportMesh.bind(this);
     }
 
     //override
     activate(){
         this.isActive = true;
+        this.exportMesh();
+        this.deactivate();
     }
 
     //override
