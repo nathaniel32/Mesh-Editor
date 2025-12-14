@@ -9,7 +9,6 @@ export class CutTool extends Feature{
         this.mode = 'remove';
         this.applyCut = this.applyCut.bind(this);
         this.cancelPreview = this.cancelPreview.bind(this);
-        this.previewCut = this.previewCut.bind(this);
         this.evaluator = new Evaluator();
         this.previewMesh = null;
         this.cutterMesh = null;
@@ -45,12 +44,12 @@ export class CutTool extends Feature{
 
     previewCut() {
         if (!this.controller.workingBrush) {
-            alert('Load OBJ file dulu!');
+            alert('Load the OBJ file first!');
             return;
         }
 
         if (!this.cutterBrush) {
-            alert('Klik kanan + drag untuk select area!');
+            alert('Right click + drag to select area!');
             return;
         }
 
@@ -97,6 +96,8 @@ export class CutTool extends Feature{
             const color = mode === 'remove' ? 0xff0000 : 0x00ff00;
             this.cutterMesh.material.color.setHex(color);
         }
+
+        this.previewCut();
     }
 
     applyCut() {
@@ -231,6 +232,6 @@ export class CutTool extends Feature{
         this.cutterBrush = new Brush(geometry);
         this.cutterBrush.updateMatrixWorld();
 
-        this.controller.statusText = 'Selection ready! Click PREVIEW';
+        this.previewCut();
     }
 }
