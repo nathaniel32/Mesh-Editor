@@ -75,8 +75,8 @@ export class ImportService extends Feature{
 
                 const size = box.getSize(new THREE.Vector3()).length();
                 this.controller.renderScene.camera.position.set(size, size, size);
-                this.controller.controls.target.set(0, 0, 0);
-                this.controller.controls.update();
+                this.controller.renderScene.controls.target.set(0, 0, 0);
+                this.controller.renderScene.controls.update();
 
                 this.controller.cutCount = 0;
 

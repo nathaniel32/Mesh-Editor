@@ -26,7 +26,7 @@ export class SelectionBox {
             console.log("TEST", this.controller.selectionBox.left);
             e.preventDefault();
             this.isDragging = true;
-            this.controller.controls.enabled = false;
+            this.controller.renderScene.controls.enabled = false;
             this.dragStart = { x: e.clientX, y: e.clientY };
             this.dragEnd = { x: e.clientX, y: e.clientY };
             
@@ -46,7 +46,7 @@ export class SelectionBox {
             
             e.preventDefault();
             this.isDragging = false;
-            this.controller.controls.enabled = true;
+            this.controller.renderScene.controls.enabled = true;
             this.controller.selectionBox.visible = false;
             
             this.controller.cutTool.createCuttingVolume();

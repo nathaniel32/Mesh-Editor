@@ -6,8 +6,9 @@ export class RenderScene {
         this.controller = controller
         this.animate = this.animate.bind(this);
         this.renderer = null;
-        this.scene = null,
-        this.camera = null
+        this.scene = null;
+        this.camera = null;
+        this.controls = null;
     }
 
     handleResize() {
@@ -27,9 +28,9 @@ export class RenderScene {
         this.renderer.setSize(this.controller.container.clientWidth, this.controller.container.clientHeight);
         this.controller.container.appendChild(this.renderer.domElement);
 
-        this.controller.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controller.controls.enableDamping = true;
-        this.controller.controls.mouseButtons = {
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.mouseButtons = {
             LEFT: THREE.MOUSE.ROTATE,
             MIDDLE: THREE.MOUSE.DOLLY,
             RIGHT: null
@@ -49,7 +50,7 @@ export class RenderScene {
 
     animate() {
         requestAnimationFrame(this.animate);
-        this.controller.controls.update();
+        this.controls.update();
         this.renderer.render(this.scene, this.camera);
     }
 }

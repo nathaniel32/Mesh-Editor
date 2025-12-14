@@ -12,6 +12,8 @@ export class CutTool extends Feature{
         this.cancelPreview = this.cancelPreview.bind(this);
         this.previewCut = this.previewCut.bind(this);
         this.selection = new SelectionBox(controller);
+        this.evaluator = new Evaluator();
+        this.previewMesh = null;
     }
 
     //override
@@ -26,9 +28,9 @@ export class CutTool extends Feature{
     }
 
     cancelPreview() {
-        if (this.controller.previewMesh) {
-            this.controller.renderScene.scene.remove(this.controller.previewMesh);
-            this.controller.previewMesh = null;
+        if (this.previewMesh) {
+            this.controller.renderScene.scene.remove(this.previewMesh);
+            this.previewMesh = null;
         }
 
         if (this.controller.workingMesh) {
@@ -58,22 +60,22 @@ export class CutTool extends Feature{
             try {
                 const operation = this.mode === 'remove' ? HOLLOW_SUBTRACTION : HOLLOW_INTERSECTION;
                 
-                const result = this.controller.evaluator.evaluate(this.controller.workingBrush, this.controller.cutterBrush, operation);
+                const result = this.evaluator.evaluate(this.controller.workingBrush, this.controller.cutterBrush, operation);
                 
                 this.controller.workingMesh.visible = false;
                 
-                if (this.controller.previewMesh) {
-                    this.controller.renderScene.scene.remove(this.controller.previewMesh);
+                if (this.previewMesh) {
+                    this.controller.renderScene.scene.remove(this.previewMesh);
                 }
                 
-                this.controller.previewMesh = new THREE.Mesh(
+                this.previewMesh = new THREE.Mesh(
                     result.geometry,
                     new THREE.MeshStandardMaterial({
                         color: 0xf39c12,
                         side: THREE.DoubleSide
                     })
                 );
-                this.controller.renderScene.scene.add(this.controller.previewMesh);
+                this.controller.renderScene.scene.add(this.previewMesh);
                 
                 this.controller.isPreviewing = true;
                 this.controller.statusText = 'Preview OK! APPLY or CANCEL';
@@ -97,14 +99,14 @@ export class CutTool extends Feature{
     }
 
     applyCut() {
-        if (!this.controller.previewMesh) return;
+        if (!this.previewMesh) return;
 
         if (this.controller.workingMesh) {
             this.controller.renderScene.scene.remove(this.controller.workingMesh);
         }
 
         this.controller.workingMesh = new THREE.Mesh(
-            this.controller.previewMesh.geometry.clone(),
+            this.previewMesh.geometry.clone(),
             new THREE.MeshStandardMaterial({
                 color: 0x3498db,
                 side: THREE.DoubleSide
@@ -112,12 +114,12 @@ export class CutTool extends Feature{
         );
         this.controller.renderScene.scene.add(this.controller.workingMesh);
 
-        this.controller.workingBrush = new Brush(this.controller.previewMesh.geometry.clone());
+        this.controller.workingBrush = new Brush(this.previewMesh.geometry.clone());
         this.controller.workingBrush.updateMatrixWorld();
 
-        if (this.controller.previewMesh) {
-            this.controller.renderScene.scene.remove(this.controller.previewMesh);
-            this.controller.previewMesh = null;
+        if (this.previewMesh) {
+            this.controller.renderScene.scene.remove(this.previewMesh);
+            this.previewMesh = null;
         }
 
         if (this.controller.cutterMesh) {

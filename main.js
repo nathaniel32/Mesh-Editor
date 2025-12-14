@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Brush, Evaluator, SUBTRACTION, INTERSECTION, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION } from 'three-bvh-csg';
 import { Features } from './models/DataClass.js';
 import { CutTool } from './features/tools/Cut.js';
@@ -21,12 +20,9 @@ new Vue({
             importService: new ImportService(this),
             exportService: new ExportService(this),
             renderScene: new RenderScene(this),
-            controls: null,
             workingMesh: null,
             workingBrush: null,
             cutterMesh: null,
-            previewMesh: null,
-            evaluator: new Evaluator(),
             cutterBrush: null,
             
             cutCount: 0,
