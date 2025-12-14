@@ -25,13 +25,11 @@ export class SelectionBoxTool extends Tool {
 
     activate() {
         this.isActive = true;
-        this.controller.fileState.container.style.cursor = 'crosshair';
         this.setupDragSelection();
     }
 
     deactivate() {
         this.isActive = false;
-        this.controller.fileState.container.style.cursor = 'default';
         this.removeDragSelection();
     }
 
@@ -54,6 +52,7 @@ export class SelectionBoxTool extends Tool {
         this.handleMouseDown = (e) => {
             if (e.button !== 2) return;
             e.preventDefault();
+            this.controller.fileState.container.style.cursor = 'crosshair';
             this.isDragging = true;
             this.controller.renderScene.controls.enabled = false;
             this.dragStart = { x: e.clientX, y: e.clientY };
@@ -70,6 +69,7 @@ export class SelectionBoxTool extends Tool {
         this.handleMouseUp = (e) => {
             if (!this.isDragging) return;
             e.preventDefault();
+            this.controller.fileState.container.style.removeProperty('cursor');
             this.isDragging = false;
             this.controller.renderScene.controls.enabled = true;
             this.box.visible = false;
