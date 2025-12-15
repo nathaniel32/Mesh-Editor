@@ -19,6 +19,11 @@ export class ImportTool extends Tool{
         const subpath = params.get("subpath");
 
         console.log("subpath:", subpath);
+        
+        if (!subpath) {
+            return
+        }
+
         const url = `/mesh-map/${encodeURIComponent(subpath)}`;
         
         fetch(url)
