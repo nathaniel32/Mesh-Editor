@@ -22,9 +22,10 @@ export const config = {
     // Users can add/remove these defaults here.
     // Ensure IDs are unique numbers.
     defaultCategories: [
-        { id: 1, name: 'Category 1', color: '#ff0000' },
-        { id: 2, name: 'Category 2', color: '#00ff00' },
-        { id: 3, name: 'Category 3', color: '#0000ff' }
+        { id: 1, name: 'Bottom', color: '#ff0000' },
+        { id: 2, name: 'Wrist', color: '#00ff00' },
+        { id: 3, name: 'Finger', color: '#0000ff' },
+        { id: 4, name: 'Thumb', color: '#ffff00' }
     ],
 
     // UI Defaults
