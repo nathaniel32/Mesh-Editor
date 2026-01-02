@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesh Vertex Labeler (Vanilla JS)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Import Three.js as an ES module -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1a1a1a; color: white; }
+        #canvas-container { cursor: grab; }
+        #canvas-container.crosshair { cursor: crosshair; }
+    </style>
+</head>
+<body class="flex h-screen bg-gray-900 text-white">
+
+    <!-- Sidebar -->
+    <div class="w-80 bg-gray-800 p-4 overflow-y-auto flex flex-col gap-4">
+        <h1 class="text-2xl font-bold">Mesh Vertex Labeler</h1>
+        
+        <!-- Load File -->
+        <div>
+            <label class="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded cursor-pointer text-sm font-medium transition-colors">
+                <span id="upload-icon">📂</span> Load OBJ File
+                <input type="file" id="file-input" accept=".obj" class="hidden">
+            </label>
+        </div>
+
+        <!-- Add Box Mode Toggle -->
+        <div>
+            <button id="selection-mode-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium transition-colors">
+                <span id="mode-icon">⬜</span>
+                <span id="mode-text">Add Box Mode: OFF</span>
+            </button>
+            <p id="mode-desc" class="text-xs text-gray-400 mt-1 text-center">Drag to rotate view</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="p-3 bg-gray-700 rounded text-sm space-y-1">
+            <div>Total Vertices: <span id="stat-total">0</span></div>
+            <div>Labeled: <span id="stat-labeled">0</span></div>
+            <div>Active Cube: <span id="stat-active-cube">None</span></div>
+        </div>
+
+        <!-- Transform Controls (Hidden by default) -->
+        <div id="transform-controls" class="hidden space-y-3">
+            <h3 class="font-semibold text-sm">Transform Active Cube</h3>
+            
+            <!-- Mode Tabs -->
+            <div class="flex gap-2">
+                <button data-mode="translate" class="transform-tab flex-1 px-3 py-2 rounded bg-blue-600 text-xs font-bold">MOVE</button>
+                <button data-mode="rotate" class="transform-tab flex-1 px-3 py-2 rounded bg-gray-700 text-xs font-bold">ROT</button>
+                <button data-mode="scale" class="transform-tab flex-1 px-3 py-2 rounded bg-gray-700 text-xs font-bold">SCALE</button>
+            </div>
+
+            <!-- Inputs Container -->
+            <div id="transform-inputs" class="space-y-2 text-sm">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Point Size Control -->
+        <div class="mb-4">
+            <label class="flex items-center justify-between text-sm font-semibold mb-1">
+                Point Size: <span id="point-size-val">0.200</span>
+            </label>
+            <input type="range" id="point-size-slider" min="0.001" max="10.0" step="0.001" value="0.2" class="w-full accent-blue-500">
+        </div>
+
+        <!-- Categories -->
+        <div class="space-y-2">
+            <div class="flex justify-between items-center">
+                <h3 class="font-semibold text-sm">Categories</h3>
+                <button id="add-category-btn" class="p-1 bg-green-600 hover:bg-green-700 rounded text-white font-bold px-2">+</button>
+            </div>
+            <div id="categories-list" class="space-y-2">
+                <!-- Categories will be injected here -->
+            </div>
+        </div>
+
+        <!-- Export -->
+        <div class="mt-auto pt-4">
+            <button id="export-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm font-medium transition-colors">
+                💾 Export Labels
+            </button>
+        </div>
+        
+        <!-- Help -->
+        <div class="p-3 bg-gray-700 rounded text-xs space-y-1">
+            <h4 class="font-semibold mb-1">Controls:</h4>
+            <div>• Select category first</div>
+            <div>• Toggle Selection Mode ON</div>
+            <div>• Drag to create cube (max 1 per category)</div>
+            <div>• Click category to activate its cube</div>
+            <div>• Use sliders to transform active cube</div>
+        </div>
+    </div>
+
+    <!-- Canvas -->
+    <div id="canvas-container" class="flex-1 relative bg-black"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { config } from './config.js';
+
+        // --- State ---
+        const state = {
+            selectionMode: false,
+            isCreatingCube: false,
+            selectionStart: null,
+            labeledCubes: new Map(), // categoryId -> {cube: {pos, scale, rot}, vertices: [], box: Mesh}
+            activeCubeId: null,
+            categories: [...config.defaultCategories], // Load defaults from config
+            activeCategory: config.defaultCategories.length > 0 ? config.defaultCategories[0].id : null,
+            transformMode: config.ui.initialTransformMode,
+            transformSpace: config.ui.initialTransformSpace,
+            scaleAnchor: 'center', // 'center', 'positive', 'negative'
+            stats: { totalVertices: 0, labeled: 0 },
+            vertices: [], // Raw positions array
+            rawObj: { v: [], vn: [], f: [], other: [] }, // Store raw OBJ data
+            isRotating: false,
+            previousMousePosition: { x: 0, y: 0 },
+            pointSize: config.pointSize.defaultValue
+        };
+
+        // --- Three.js Globals ---
+        let scene, camera, renderer, pointsMesh;
+        const container = document.getElementById('canvas-container');
+
+        // --- Initialization ---
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(config.scene.backgroundColor);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(...config.scene.cameraPosition);
+            camera.lookAt(0, 0, 0);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+
+            // Helpers
+            const gridHelper = new THREE.GridHelper(config.scene.gridSize, config.scene.gridDivisions, 0x444444, 0x222222);
+            scene.add(gridHelper);
+            const axesHelper = new THREE.AxesHelper(config.scene.axesSize);
+            scene.add(axesHelper);
+
+            // Animation Loop
+            function animate() {
+                requestAnimationFrame(animate);
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            // Resize Handler
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+
+            // Input Event Listeners
+            renderer.domElement.addEventListener('mousedown', handleMouseDown);
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+            renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
+            
+            // Point Size Slider - Init from Config
+            const sizeSlider = document.getElementById('point-size-slider');
+            const sizeVal = document.getElementById('point-size-val');
+            
+            sizeSlider.min = config.pointSize.min;
+            sizeSlider.max = config.pointSize.max;
+            sizeSlider.step = config.pointSize.step;
+            sizeSlider.value = state.pointSize;
+            sizeVal.textContent = state.pointSize.toFixed(3);
+
+            sizeSlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                state.pointSize = val;
+                sizeVal.textContent = val.toFixed(3);
+                if (pointsMesh) {
+                    pointsMesh.material.size = val;
+                }
+            });
+
+            // UI Init
+            renderCategories();
+            updateTransformControls();
+            updateStatsUI();
+        }
+
+        // --- Core Functions ---
+
+        function loadOBJ(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => parseOBJ(e.target.result);
+            reader.readAsText(file);
+        }
+
+        function parseOBJ(text) {
+            const lines = text.split('\n');
+            const positions = [];
+            
+            // Reset raw storage
+            state.rawObj = { v: [], vn: [], f: [], other: [] };
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+
+                const parts = trimmed.split(/\s+/);
+                const type = parts[0];
+
+                if (type === 'v') {
+                    // Parse for visualization
+                    positions.push(
+                        parseFloat(parts[1]),
+                        parseFloat(parts[2]),
+                        parseFloat(parts[3])
+                    );
+                    // Store raw
+                    state.rawObj.v.push(trimmed);
+                } else if (type === 'vn') {
+                    state.rawObj.vn.push(trimmed);
+                } else if (type === 'f') {
+                    state.rawObj.f.push(trimmed);
+                } else {
+                    state.rawObj.other.push(trimmed);
+                }
+            });
+
+            state.vertices = positions;
+            
+            // Reset labeled cubes meshes but keep categories
+            state.labeledCubes.forEach(data => {
+                if (data.box) scene.remove(data.box);
+            });
+            state.labeledCubes.clear();
+            state.activeCubeId = null;
+            
+            state.stats.totalVertices = positions.length / 3;
+            state.stats.labeled = 0;
+            
+            createPointCloud(positions);
+            updateStatsUI();
+            renderCategories(); // To update 'Has cube' status
+            updateTransformControls();
+        }
+
+        function createCircleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const context = canvas.getContext('2d');
+            
+            context.beginPath();
+            context.arc(16, 16, 14, 0, 2 * Math.PI);
+            context.fillStyle = 'white';
+            context.fill();
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createPointCloud(positions) {
+            if (pointsMesh) scene.remove(pointsMesh);
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+            const colors = new Float32Array(positions.length);
+            for (let i = 0; i < colors.length; i += 3) {
+                const vertexIndex = i / 3;
+                let found = false;
+
+                state.labeledCubes.forEach((cubeData, catId) => {
+                    if (cubeData.vertices.includes(vertexIndex)) {
+                        const category = state.categories.find(c => c.id === catId);
+                        if (category) {
+                            const color = new THREE.Color(category.color);
+                            colors[i] = color.r;
+                            colors[i + 1] = color.g;
+                            colors[i + 2] = color.b;
+                            found = true;
+                        }
+                    }
+                });
+
+                if (!found) {
+                    const defColor = config.ui.pointDefaultColor || [0.8, 0.8, 0.8];
+                    colors[i] = defColor[0];
+                    colors[i + 1] = defColor[1];
+                    colors[i + 2] = defColor[2];
+                }
+            }
+
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            const sprite = createCircleTexture();
+            const material = new THREE.PointsMaterial({ 
+                size: state.pointSize, // Use state size
+                vertexColors: true, 
+                sizeAttenuation: true,
+                map: sprite,
+                alphaTest: 0.5,
+                transparent: true
+            });
+
+            pointsMesh = new THREE.Points(geometry, material);
+            scene.add(pointsMesh);
+
+            // Center camera
+            geometry.computeBoundingSphere();
+            const center = geometry.boundingSphere.center;
+            const radius = geometry.boundingSphere.radius;
+            // Only re-center if it's a fresh load (heuristic could be better)
+            // For now, let's re-center on load
+             if (state.labeledCubes.size === 0) {
+                 camera.position.set(center.x + radius * 2, center.y + radius * 2, center.z + radius * 2);
+                 camera.lookAt(center);
+             }
+        }
+
+        // --- Interaction Handlers ---
+
+        function handleMouseDown(e) {
+            if (e.button !== 0) return;
+            const rect = renderer.domElement.getBoundingClientRect();
+            
+            // Check if click is inside canvas
+            if (e.clientX < rect.left || e.clientX > rect.right || 
+                e.clientY < rect.top || e.clientY > rect.bottom) return;
+
+            let boxCreated = false;
+
+            if (state.selectionMode && pointsMesh) {
+                const mouse = new THREE.Vector2();
+                mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+                const raycaster = new THREE.Raycaster();
+                raycaster.params.Points.threshold = Math.max(0.1, state.pointSize / 2); // Dynamic threshold
+                raycaster.setFromCamera(mouse, camera);
+
+                // Raycast against points, not plane
+                const intersects = raycaster.intersectObject(pointsMesh);
+
+                if (intersects.length > 0) {
+                    boxCreated = true;
+                    // Snap to exact vertex position
+                    state.selectionStart = intersects[0].point.clone();
+                    state.isCreatingCube = true;
+
+                    // Remove old cube for this category
+                    const oldCube = state.labeledCubes.get(state.activeCategory);
+                    if (oldCube && oldCube.box) {
+                        scene.remove(oldCube.box);
+                    }
+
+                    // Create new visual cube
+                    const category = state.categories.find(c => c.id === state.activeCategory);
+                    const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+                    const boxMaterial = new THREE.MeshBasicMaterial({
+                        color: new THREE.Color(category.color),
+                        transparent: true,
+                        opacity: 0.3,
+                    });
+                    const box = new THREE.Mesh(boxGeometry, boxMaterial);
+                    
+                    const edgesGeometry = new THREE.EdgesGeometry(boxGeometry);
+                    const edgesMaterial = new THREE.LineBasicMaterial({ color: new THREE.Color(category.color), linewidth: 2 });
+                    const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
+                    box.add(edges);
+
+                    box.position.copy(state.selectionStart);
+
+                    // Scale based on distance to camera to ensure visibility
+                    const dist = intersects[0].distance;
+                    const s = dist * config.interaction.addBoxScaleFactor; 
+                    box.scale.set(s, s, s); 
+                    scene.add(box);
+
+                    state.labeledCubes.set(state.activeCategory, {
+                        cube: { position: state.selectionStart.clone(), scale: new THREE.Vector3(s, s, s), rotation: new THREE.Euler() },
+                        vertices: [],
+                        box: box
+                    });
+                    state.activeCubeId = state.activeCategory;
+                    updateStatsUI();
+                    renderCategories();
+                    updateTransformControls();
+                }
+
+            } 
+            
+            if (!boxCreated) {
+                state.isRotating = true;
+                state.previousMousePosition = { x: e.clientX, y: e.clientY };
+            }
+        }
+
+        function handleMouseMove(e) {
+            if (state.isCreatingCube && state.selectionStart) {
+                const rect = renderer.domElement.getBoundingClientRect();
+                const mouse = new THREE.Vector2();
+                mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, camera);
+                
+                // Construct a plane facing the camera, passing through the selection start point
+                const planeNormal = new THREE.Vector3();
+                camera.getWorldDirection(planeNormal);
+                const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(planeNormal, state.selectionStart);
+                
+                const intersect = new THREE.Vector3();
+                raycaster.ray.intersectPlane(plane, intersect);
+
+                const cubeData = state.labeledCubes.get(state.activeCategory);
+                if (cubeData && cubeData.box && intersect) {
+                    // Calculate center and size based on start point and current mouse projection
+                    const center = new THREE.Vector3().addVectors(state.selectionStart, intersect).multiplyScalar(0.5);
+                    const size = new THREE.Vector3().subVectors(intersect, state.selectionStart).abs();
+                    
+                    // Dynamic minimum size to ensure visibility at any scale
+                    const dist = camera.position.distanceTo(center);
+                    const minSize = dist * config.interaction.minBoxScaleFactor;
+
+                    cubeData.box.position.copy(center);
+                    cubeData.box.scale.set(
+                        Math.max(size.x, minSize),
+                        Math.max(size.y, minSize),
+                        Math.max(size.z, minSize)
+                    );
+
+                    cubeData.cube.position.copy(cubeData.box.position);
+                    cubeData.cube.scale.copy(cubeData.box.scale);
+                }
+            } else if (state.isRotating && pointsMesh) {
+                const deltaX = e.clientX - state.previousMousePosition.x;
+                const deltaY = e.clientY - state.previousMousePosition.y;
+
+                const center = pointsMesh.geometry.boundingSphere ? pointsMesh.geometry.boundingSphere.center : new THREE.Vector3();
+                const offset = new THREE.Vector3().subVectors(camera.position, center);
+                const distance = offset.length();
+
+                let phi = Math.atan2(offset.x, offset.z) - deltaX * 0.01;
+                let theta = Math.acos(Math.max(-1, Math.min(1, offset.y / distance))) - deltaY * 0.01;
+                theta = Math.max(0.1, Math.min(Math.PI - 0.1, theta));
+
+                offset.x = distance * Math.sin(theta) * Math.sin(phi);
+                offset.y = distance * Math.cos(theta);
+                offset.z = distance * Math.sin(theta) * Math.cos(phi);
+
+                camera.position.copy(center).add(offset);
+                camera.lookAt(center);
+
+                state.previousMousePosition = { x: e.clientX, y: e.clientY };
+            }
+        }
+
+        function handleMouseUp() {
+            if (state.isCreatingCube) {
+                updateVerticesInCube(state.activeCategory);
+                state.isCreatingCube = false;
+                state.selectionStart = null;
+                setSelectionMode(false); // Auto turn off
+            }
+            state.isRotating = false;
+        }
+
+        function handleWheel(e) {
+            e.preventDefault();
+            
+            // Calculate distance to center to scale zoom speed
+            const center = pointsMesh?.geometry?.boundingSphere?.center || new THREE.Vector3();
+            const distance = camera.position.distanceTo(center);
+            
+            // Normalize scroll input (some mice send huge numbers, some small)
+            // Using Math.sign ensures consistent direction.
+            // 0.1 factor means we move 10% of the remaining distance per scroll click.
+            const speed = distance * 0.1 * Math.sign(e.deltaY);
+            
+            // TranslateZ moves along the camera's local Forward/Back axis
+            camera.translateZ(speed);
+        }
+
+        function updateVerticesInCube(categoryId) {
+            const cubeData = state.labeledCubes.get(categoryId);
+            if (!cubeData || !cubeData.box || !pointsMesh) return;
+
+            const box = cubeData.box;
+            
+            // Critical: Update the matrix world to reflect recent changes (position/rotation/scale)
+            // before calculating the inverse. Otherwise, we use the previous frame's matrix.
+            box.updateMatrixWorld();
+
+            // Logic to check points inside OBB (Oriented Bounding Box)
+            // Transform points to box local space is easier
+            const inverseMatrix = new THREE.Matrix4().copy(box.matrixWorld).invert();
+            const positions = pointsMesh.geometry.attributes.position.array;
+            const selected = [];
+
+            const p = new THREE.Vector3();
+            
+            // Box geometry is 1x1x1 centered at 0,0,0
+            // So in local space, bounds are -0.5 to 0.5
+            const limit = 0.5;
+
+            for (let i = 0; i < positions.length; i += 3) {
+                p.set(positions[i], positions[i+1], positions[i+2]);
+                p.applyMatrix4(inverseMatrix);
+                
+                if (Math.abs(p.x) <= limit && Math.abs(p.y) <= limit && Math.abs(p.z) <= limit) {
+                    selected.push(i / 3);
+                }
+            }
+
+            cubeData.vertices = selected;
+            updateStatsUI();
+            createPointCloud(state.vertices);
+            renderCategories();
+        }
+
+        function deleteCube(categoryId) {
+            const cubeData = state.labeledCubes.get(categoryId);
+            if (cubeData && cubeData.box) {
+                scene.remove(cubeData.box);
+            }
+            state.labeledCubes.delete(categoryId);
+            if (state.activeCubeId === categoryId) {
+                state.activeCubeId = null;
+                updateTransformControls();
+            }
+            updateVerticesInCube(categoryId); // Effectively clears it
+            updateStatsUI();
+            renderCategories();
+            createPointCloud(state.vertices);
+        }
+
+        // --- UI Updates & Logic ---
+
+        // File Input
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            if (e.target.files[0]) loadOBJ(e.target.files[0]);
+        });
+
+        // Mode Toggle
+        const modeBtn = document.getElementById('selection-mode-btn');
+        const modeText = document.getElementById('mode-text');
+        const modeDesc = document.getElementById('mode-desc');
+        
+        function setSelectionMode(active) {
+            state.selectionMode = active;
+            if (state.selectionMode) {
+                modeBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                modeBtn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+                modeText.textContent = "Add Box Mode: ON";
+                modeDesc.textContent = "Drag to create/update cube for active category";
+                container.classList.add('crosshair');
+            } else {
+                modeBtn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+                modeBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                modeText.textContent = "Add Box Mode: OFF";
+                modeDesc.textContent = "Drag to rotate view";
+                container.classList.remove('crosshair');
+            }
+        }
+
+        modeBtn.addEventListener('click', () => {
+            setSelectionMode(!state.selectionMode);
+        });
+
+        // Stats UI
+        function updateStatsUI() {
+            let totalLabeled = 0;
+            state.labeledCubes.forEach(c => totalLabeled += c.vertices.length);
+            state.stats.labeled = totalLabeled;
+
+            document.getElementById('stat-total').textContent = state.stats.totalVertices;
+            document.getElementById('stat-labeled').textContent = state.stats.labeled;
+            
+            const activeCat = state.categories.find(c => c.id === state.activeCubeId);
+            document.getElementById('stat-active-cube').textContent = activeCat ? activeCat.name : 'None';
+        }
+
+        // Categories UI
+        function renderCategories() {
+            const list = document.getElementById('categories-list');
+            list.innerHTML = '';
+            
+            state.categories.forEach(cat => {
+                const cubeData = state.labeledCubes.get(cat.id);
+                const hasCube = !!cubeData;
+                const count = cubeData ? cubeData.vertices.length : 0;
+                const isActive = state.activeCategory === cat.id;
+                const isCubeActive = state.activeCubeId === cat.id;
+
+                const div = document.createElement('div');
+                div.className = `p-2 rounded cursor-pointer border border-transparent ${isActive ? 'bg-gray-600' : 'bg-gray-700'} ${isCubeActive ? '!border-yellow-500' : ''}`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded flex-shrink-0" style="background-color: ${cat.color}"></div>
+                        <input type="text" class="category-name flex-1 bg-transparent outline-none min-w-0" value="${cat.name}">
+                        <button class="delete-cat p-1 hover:bg-red-600 rounded flex-shrink-0">🗑️</button>
+                    </div>
+                    ${hasCube ? `<div class="text-xs text-gray-400 mt-1 ml-8">${count} pts • Has cube</div>` : ''}
+                `;
+
+                // Events
+                div.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'INPUT' || e.target.closest('.delete-cat')) return;
+                    state.activeCategory = cat.id;
+                    if (hasCube) {
+                        state.activeCubeId = cat.id;
+                        updateTransformControls();
+                    }
+                    updateStatsUI();
+                    renderCategories();
+                });
+
+                div.querySelector('.category-name').addEventListener('input', (e) => {
+                    cat.name = e.target.value;
+                });
+                
+                div.querySelector('.delete-cat').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteCube(cat.id);
+                    state.categories = state.categories.filter(c => c.id !== cat.id);
+                    if (state.activeCategory === cat.id && state.categories.length > 0) {
+                        state.activeCategory = state.categories[0].id;
+                    }
+                    renderCategories();
+                });
+
+                list.appendChild(div);
+            });
+        }
+
+        document.getElementById('add-category-btn').addEventListener('click', () => {
+            const newId = Math.max(...state.categories.map(c => c.id), 0) + 1;
+            const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff8800', '#8800ff'];
+            state.categories.push({
+                id: newId,
+                name: `Category ${newId}`,
+                color: colors[newId % colors.length]
+            });
+            renderCategories();
+        });
+
+        // Transform Controls
+        const transformContainer = document.getElementById('transform-controls');
+        const transformInputs = document.getElementById('transform-inputs');
+
+        function updateTransformControls() {
+            if (!state.activeCubeId) {
+                transformContainer.classList.add('hidden');
+                return;
+            }
+            transformContainer.classList.remove('hidden');
+            
+            // Update tabs
+            document.querySelectorAll('.transform-tab').forEach(btn => {
+                if (btn.dataset.mode === state.transformMode) {
+                    btn.classList.remove('bg-gray-700');
+                    btn.classList.add('bg-blue-600');
+                } else {
+                    btn.classList.add('bg-gray-700');
+                    btn.classList.remove('bg-blue-600');
+                }
+            });
+
+            // Update inputs
+            renderTransformInputs();
+        }
+
+        document.querySelectorAll('.transform-tab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.transformMode = btn.dataset.mode;
+                updateTransformControls();
+            });
+        });
+
+        function renderTransformInputs() {
+            transformInputs.innerHTML = '';
+            const cubeData = state.labeledCubes.get(state.activeCubeId);
+            if (!cubeData) return;
+
+            // Space Toggle Helper
+            const createSpaceToggle = () => {
+                const toggleContainer = document.createElement('div');
+                toggleContainer.className = "flex justify-end mb-2";
+                
+                let btnColor = "bg-indigo-600 hover:bg-indigo-500";
+                if (state.transformSpace === 'local') btnColor = "bg-teal-600 hover:bg-teal-500";
+                if (state.transformSpace === 'view') btnColor = "bg-orange-600 hover:bg-orange-500";
+
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = "px-2 py-1 text-xs font-bold rounded " + btnColor;
+                toggleBtn.textContent = "Axis: " + state.transformSpace.toUpperCase();
+                toggleBtn.onclick = () => {
+                    if (state.transformSpace === 'global') state.transformSpace = 'local';
+                    else if (state.transformSpace === 'local') state.transformSpace = 'view';
+                    else state.transformSpace = 'global';
+                    renderTransformInputs();
+                };
+                toggleContainer.appendChild(toggleBtn);
+                transformInputs.appendChild(toggleContainer);
+            };
+
+            if (state.transformMode === 'translate') {
+                createSpaceToggle();
+                ['x', 'y', 'z'].forEach(axis => {
+                    createMoveControl(axis, cubeData);
+                });
+            } else if (state.transformMode === 'rotate') {
+                createSpaceToggle();
+                ['x', 'y', 'z'].forEach(axis => {
+                    createRotateControl(axis, cubeData);
+                });
+            } else if (state.transformMode === 'scale') {
+                createSpaceToggle();
+
+                // Anchor Toggle
+                const anchorContainer = document.createElement('div');
+                anchorContainer.className = "flex justify-end mb-2";
+                
+                let anchorText = "ANCHOR: CENTER";
+                let anchorColor = "bg-gray-600 hover:bg-gray-500";
+                
+                if (state.scaleAnchor === 'positive') {
+                    anchorText = "ANCHOR: POS (+)";
+                    anchorColor = "bg-green-600 hover:bg-green-500";
+                } else if (state.scaleAnchor === 'negative') {
+                    anchorText = "ANCHOR: NEG (-)";
+                    anchorColor = "bg-red-600 hover:bg-red-500";
+                }
+
+                const anchorBtn = document.createElement('button');
+                anchorBtn.className = "px-2 py-1 text-xs font-bold rounded " + anchorColor;
+                anchorBtn.textContent = anchorText;
+                anchorBtn.onclick = () => {
+                    if (state.scaleAnchor === 'center') state.scaleAnchor = 'positive';
+                    else if (state.scaleAnchor === 'positive') state.scaleAnchor = 'negative';
+                    else state.scaleAnchor = 'center';
+                    renderTransformInputs();
+                };
+                anchorContainer.appendChild(anchorBtn);
+                transformInputs.appendChild(anchorContainer);
+
+                 ['x', 'y', 'z'].forEach(axis => {
+                    createScaleControl(axis, cubeData);
+                });
+            }
+        }
+
+        function createScaleControl(axis, cubeData) {
+            const container = document.createElement('div');
+            container.className = "flex items-center gap-2 p-1 rounded hover:bg-gray-750";
+
+            // Determine Label
+            let labelText = "";
+            if (state.transformSpace === 'view') {
+                if (axis === 'x') labelText = "WIDTH (scr)"; 
+                if (axis === 'y') labelText = "HEIGHT (scr)";   
+                if (axis === 'z') labelText = "DEPTH (scr)";  
+            } else if (state.transformSpace === 'local') {
+                labelText = "LOC " + axis;
+            } else {
+                labelText = "GLOB " + axis;
+            }
+
+            // Label
+            const labelSpan = document.createElement('span');
+            labelSpan.className = "w-20 uppercase font-bold text-[10px] text-gray-400"; 
+            labelSpan.textContent = labelText;
+            container.appendChild(labelSpan);
+
+            // Minus Button
+            const minusBtn = document.createElement('button');
+            minusBtn.className = "w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-lg leading-none font-bold text-gray-200 transition-colors pb-1";
+            minusBtn.textContent = "-";
+            container.appendChild(minusBtn);
+
+            // Spacer/Indicator
+            const indicator = document.createElement('div');
+            indicator.className = "flex-1 text-center text-xs text-gray-500 font-mono";
+            
+            // Dynamic step calculation
+            const getStep = () => {
+                const dist = camera.position.distanceTo(cubeData.cube.position);
+                return Math.max(config.interaction.transformMinStep, dist * config.interaction.transformStepFactor);
+            };
+
+            const updateIndicator = () => {
+                const step = getStep();
+                indicator.textContent = "step " + step.toPrecision(1);
+            };
+            
+            updateIndicator(); // Initial set
+            // Update indicator on mouse enter to keep it somewhat fresh without spamming
+            container.addEventListener('mouseenter', updateIndicator);
+
+            container.appendChild(indicator);
+
+            // Plus Button
+            const plusBtn = document.createElement('button');
+            plusBtn.className = "w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-lg leading-none font-bold text-gray-200 transition-colors pb-1";
+            plusBtn.textContent = "+";
+            container.appendChild(plusBtn);
+
+            // Logic
+            const scale = (dir) => {
+                const box = cubeData.box;
+                const step = getStep();
+                const change = dir * step;
+                
+                let targetLocalAxis = axis;
+                let sign = 1; // Used to flip movement direction if axis is inverted? Usually 1.
+
+                // 1. Identify which Local Axis we are modifying
+                if (state.transformSpace === 'local') {
+                    targetLocalAxis = axis;
+                } else {
+                    // Smart Scale Logic for Global/View
+                    const targetVec = new THREE.Vector3();
+                    if (state.transformSpace === 'view') {
+                        const forward = new THREE.Vector3();
+                        camera.getWorldDirection(forward);
+                        const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+                        const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+                        
+                        if (axis === 'x') targetVec.copy(right);
+                        if (axis === 'y') targetVec.copy(up);
+                        if (axis === 'z') targetVec.copy(forward);
+                    } else {
+                        // Global
+                        if (axis === 'x') targetVec.set(1, 0, 0);
+                        if (axis === 'y') targetVec.set(0, 1, 0);
+                        if (axis === 'z') targetVec.set(0, 0, 1);
+                    }
+
+                    const invRot = box.quaternion.clone().invert();
+                    targetVec.applyQuaternion(invRot);
+
+                    const absX = Math.abs(targetVec.x);
+                    const absY = Math.abs(targetVec.y);
+                    const absZ = Math.abs(targetVec.z);
+                    
+                    targetLocalAxis = 'x';
+                    if (absY > absX && absY > absZ) targetLocalAxis = 'y';
+                    if (absZ > absX && absZ > absY) targetLocalAxis = 'z';
+                }
+
+                // 2. Apply Scale
+                const oldScale = box.scale[targetLocalAxis];
+                const newScale = Math.max(0.001, oldScale + change); // Lower min scale for precision
+                const actualChange = newScale - oldScale; 
+                
+                box.scale[targetLocalAxis] = newScale;
+
+                // 3. Apply Anchor Translation
+                if (state.scaleAnchor !== 'center' && actualChange !== 0) {
+                    const shiftAmount = actualChange * 0.5;
+                    const shiftDir = state.scaleAnchor === 'negative' ? 1 : -1;
+                    
+                    if (targetLocalAxis === 'x') box.translateX(shiftAmount * shiftDir);
+                    if (targetLocalAxis === 'y') box.translateY(shiftAmount * shiftDir);
+                    if (targetLocalAxis === 'z') box.translateZ(shiftAmount * shiftDir);
+                }
+                
+                // Sync data
+                cubeData.cube.scale.copy(box.scale);
+                cubeData.cube.position.copy(box.position);
+                updateVerticesInCube(state.activeCubeId);
+                
+                updateIndicator(); // Update indicator on click as well
+            };
+
+            minusBtn.addEventListener('click', () => scale(-1));
+            plusBtn.addEventListener('click', () => scale(1));
+
+            transformInputs.appendChild(container);
+        }
+
+        function createMoveControl(axis, cubeData) {
+            const container = document.createElement('div');
+            container.className = "flex items-center gap-2 p-1 rounded hover:bg-gray-750";
+
+            // Determine Label
+            let labelText = "";
+            if (state.transformSpace === 'view') {
+                if (axis === 'x') labelText = "LEFT/RIGHT";
+                if (axis === 'y') labelText = "DOWN/UP";
+                if (axis === 'z') labelText = "BACK/FWD";
+            } else if (state.transformSpace === 'local') {
+                labelText = "LOC " + axis;
+            } else {
+                labelText = "GLOB " + axis;
+            }
+
+            // Label
+            const labelSpan = document.createElement('span');
+            labelSpan.className = "w-20 uppercase font-bold text-[10px] text-gray-400"; 
+            labelSpan.textContent = labelText;
+            container.appendChild(labelSpan);
+
+            // Minus Button
+            const minusBtn = document.createElement('button');
+            minusBtn.className = "w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-lg leading-none font-bold text-gray-200 transition-colors pb-1";
+            minusBtn.textContent = "-";
+            container.appendChild(minusBtn);
+
+            // Spacer/Indicator
+            const indicator = document.createElement('div');
+            indicator.className = "flex-1 text-center text-xs text-gray-500 font-mono";
+            
+            // Dynamic step calculation
+            const getStep = () => {
+                const dist = camera.position.distanceTo(cubeData.cube.position);
+                return Math.max(config.interaction.transformMinStep, dist * config.interaction.transformStepFactor);
+            };
+
+            const updateIndicator = () => {
+                const step = getStep();
+                indicator.textContent = "step " + step.toPrecision(1);
+            };
+            
+            updateIndicator();
+            container.addEventListener('mouseenter', updateIndicator);
+            
+            container.appendChild(indicator);
+
+            // Plus Button
+            const plusBtn = document.createElement('button');
+            plusBtn.className = "w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-lg leading-none font-bold text-gray-200 transition-colors pb-1";
+            plusBtn.textContent = "+";
+            container.appendChild(plusBtn);
+
+            // Logic
+            const move = (dir) => {
+                const box = cubeData.box;
+                const step = getStep();
+                
+                if (state.transformSpace === 'local') {
+                    if (axis === 'x') box.translateX(dir * step);
+                    if (axis === 'y') box.translateY(dir * step);
+                    if (axis === 'z') box.translateZ(dir * step);
+                } else if (state.transformSpace === 'view') {
+                    // View Space Movement
+                    const forward = new THREE.Vector3();
+                    camera.getWorldDirection(forward);
+                    const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+                    const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+                    
+                    const moveVec = new THREE.Vector3();
+                    if (axis === 'x') moveVec.copy(right); 
+                    if (axis === 'y') moveVec.copy(up);    
+                    if (axis === 'z') moveVec.copy(forward);
+                    
+                    moveVec.multiplyScalar(dir * step);
+                    box.position.add(moveVec);
+                } else {
+                    // Global
+                    box.position[axis] += dir * step;
+                }
+                
+                // Sync data
+                cubeData.cube.position.copy(box.position);
+                updateVerticesInCube(state.activeCubeId);
+                
+                updateIndicator();
+            };
+
+            minusBtn.addEventListener('click', () => move(-1));
+            plusBtn.addEventListener('click', () => move(1));
+
+            transformInputs.appendChild(container);
+        }
+
+        function createRotateControl(axis, cubeData) {
+            const container = document.createElement('div');
+            container.className = "flex items-center gap-2 p-1 rounded hover:bg-gray-750";
+
+            // Determine Label
+            let labelText = "";
+            if (state.transformSpace === 'view') {
+                if (axis === 'x') labelText = "PITCH (X)"; // Up/Down rotation
+                if (axis === 'y') labelText = "YAW (Y)";   // Left/Right rotation
+                if (axis === 'z') labelText = "ROLL (Z)";  // Tilt
+            } else if (state.transformSpace === 'local') {
+                labelText = "LOC " + axis;
+            } else {
+                labelText = "GLOB " + axis;
+            }
+
+            // Label
+            const labelSpan = document.createElement('span');
+            labelSpan.className = "w-20 uppercase font-bold text-[10px] text-gray-400"; 
+            labelSpan.textContent = labelText;
+            container.appendChild(labelSpan);
+
+            const stepDeg = config.interaction.rotationStepDeg;
+            const stepRad = stepDeg * (Math.PI / 180);
+
+            // Minus Button
+            const minusBtn = document.createElement('button');
+            minusBtn.className = "w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-lg leading-none font-bold text-gray-200 transition-colors pb-1";
+            minusBtn.textContent = "-";
+            container.appendChild(minusBtn);
+
+            // Spacer/Indicator
+            const indicator = document.createElement('div');
+            indicator.className = "flex-1 text-center text-xs text-gray-500 font-mono";
+            indicator.textContent = stepDeg + "°";
+            container.appendChild(indicator);
+
+            // Plus Button
+            const plusBtn = document.createElement('button');
+            plusBtn.className = "w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-lg leading-none font-bold text-gray-200 transition-colors pb-1";
+            plusBtn.textContent = "+";
+            container.appendChild(plusBtn);
+
+            // Logic
+            const rotate = (dir) => {
+                const box = cubeData.box;
+                const amount = dir * stepRad;
+
+                if (state.transformSpace === 'local') {
+                    if (axis === 'x') box.rotateX(amount);
+                    if (axis === 'y') box.rotateY(amount);
+                    if (axis === 'z') box.rotateZ(amount);
+                } else if (state.transformSpace === 'view') {
+                    const forward = new THREE.Vector3();
+                    camera.getWorldDirection(forward);
+                    const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+                    const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+
+                    const rotAxis = new THREE.Vector3();
+                    if (axis === 'x') rotAxis.copy(right);
+                    if (axis === 'y') rotAxis.copy(up);
+                    if (axis === 'z') rotAxis.copy(forward);
+
+                    // Rotate around world axis passing through box center
+                    // We can use rotateOnWorldAxis which rotates around object center using a world vector
+                    box.rotateOnWorldAxis(rotAxis, amount);
+                } else {
+                    // Global
+                    const rotAxis = new THREE.Vector3();
+                    if (axis === 'x') rotAxis.set(1, 0, 0);
+                    if (axis === 'y') rotAxis.set(0, 1, 0);
+                    if (axis === 'z') rotAxis.set(0, 0, 1);
+                    box.rotateOnWorldAxis(rotAxis, amount);
+                }
+                
+                // Sync data
+                cubeData.cube.rotation.copy(box.rotation);
+                updateVerticesInCube(state.activeCubeId);
+            };
+
+            minusBtn.addEventListener('click', () => rotate(-1));
+            plusBtn.addEventListener('click', () => rotate(1));
+
+            transformInputs.appendChild(container);
+        }
+
+        function createSlider(label, min, max, step, value, onChange) {
+            const container = document.createElement('div');
+            container.className = "flex items-center gap-2 p-1 rounded hover:bg-gray-750";
+
+            // Label
+            const labelSpan = document.createElement('span');
+            labelSpan.className = "w-4 uppercase font-bold text-xs text-gray-400";
+            labelSpan.textContent = label;
+            container.appendChild(labelSpan);
+
+            // Minus Button
+            const minusBtn = document.createElement('button');
+            minusBtn.className = "w-6 h-6 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-lg leading-none font-bold text-gray-200 transition-colors pb-1";
+            minusBtn.textContent = "-";
+            container.appendChild(minusBtn);
+
+            // Range Input
+            const input = document.createElement('input');
+            input.type = "range";
+            input.min = min;
+            input.max = max;
+            input.step = step;
+            input.value = value;
+            input.className = "flex-1 accent-blue-500 h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer";
+            container.appendChild(input);
+
+            // Plus Button
+            const plusBtn = document.createElement('button');
+            plusBtn.className = "w-6 h-6 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-lg leading-none font-bold text-gray-200 transition-colors pb-1";
+            plusBtn.textContent = "+";
+            container.appendChild(plusBtn);
+
+            // Value Display (Editable)
+            const valDisplay = document.createElement('input');
+            valDisplay.type = "number";
+            // Remove spinner buttons for cleaner look
+            valDisplay.className = "w-14 bg-transparent text-right font-mono text-xs border-b border-gray-600 focus:border-blue-500 outline-none text-gray-200";
+            
+            // Format initial value: if int, no decimals. if float, 1 decimal.
+            const formatVal = (v) => Math.abs(v % 1) < 0.001 ? v.toFixed(0) : v.toFixed(1);
+            valDisplay.value = formatVal(value);
+            
+            container.appendChild(valDisplay);
+
+            // Logic
+            const updateValue = (newVal) => {
+                // Clamp
+                newVal = Math.max(min, Math.min(max, newVal));
+                
+                input.value = newVal;
+                valDisplay.value = formatVal(newVal);
+                onChange(newVal);
+            };
+
+            input.addEventListener('input', (e) => {
+                const v = parseFloat(e.target.value);
+                valDisplay.value = formatVal(v);
+                onChange(v);
+            });
+
+            minusBtn.addEventListener('click', () => {
+                const current = parseFloat(input.value);
+                updateValue(current - step);
+            });
+
+            plusBtn.addEventListener('click', () => {
+                const current = parseFloat(input.value);
+                updateValue(current + step);
+            });
+            
+            valDisplay.addEventListener('change', (e) => {
+                const v = parseFloat(e.target.value);
+                if (!isNaN(v)) {
+                    updateValue(v);
+                }
+            });
+
+            transformInputs.appendChild(container);
+        }
+
+        // Export
+        document.getElementById('export-btn').addEventListener('click', () => {
+            const data = {
+                metadata: {
+                    generatedBy: 'Mesh Vertex Labeler',
+                    date: new Date().toISOString()
+                },
+                rawObj: state.rawObj, // Export raw OBJ data
+                categories: state.categories,
+                cubes: Array.from(state.labeledCubes.entries()).map(([catId, cubeData]) => ({
+                    categoryId: catId,
+                    vertices: cubeData.vertices,
+                    cube: {
+                        position: cubeData.cube.position,
+                        scale: cubeData.cube.scale,
+                        rotation: cubeData.cube.rotation
+                    }
+                }))
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'vertex_labels.json';
+            a.click();
+        });
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>
