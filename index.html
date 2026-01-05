@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesh Vertex Labeler (Modular)</title>
+    <title>Mesh Vertex Labeler</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Import Three.js as an ES module -->
     <script type="importmap">
         {
@@ -17,102 +18,188 @@
         body { margin: 0; overflow: hidden; background-color: #1a1a1a; color: white; }
         #canvas-container { cursor: grab; }
         #canvas-container.crosshair { cursor: crosshair; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+        /* Tooltip Container */
+        .tooltip-container { position: relative; }
+        .tooltip-container:hover .tooltip-text { opacity: 1; visibility: visible; }
+        .tooltip-text {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #000;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 50;
+        }
     </style>
 </head>
-<body class="flex h-screen bg-gray-900 text-white">
+<body class="flex flex-col h-screen bg-gray-900 text-gray-200">
 
-    <!-- Sidebar -->
-    <div class="w-80 bg-gray-800 p-4 overflow-y-auto flex flex-col gap-4">
-        <h1 class="text-2xl font-bold">Mesh Vertex Labeler</h1>
+    <!-- Top Navigation Bar (Info Only) -->
+    <header class="h-12 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-4 shrink-0 z-10 shadow-sm">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-cube text-blue-500 text-lg"></i>
+            <h1 class="font-bold text-base tracking-wide text-white">Vertex Labeler</h1>
+        </div>
+
+        <div class="flex items-center gap-6 text-xs text-gray-400">
+            <div class="flex items-center gap-1.5 bg-gray-700/50 px-3 py-1 rounded">
+                <i class="fa-solid fa-circle-nodes text-blue-400"></i>
+                <span>Total: <span id="stat-total" class="font-mono text-white font-bold">0</span></span>
+            </div>
+            <div class="flex items-center gap-1.5 bg-gray-700/50 px-3 py-1 rounded">
+                <i class="fa-solid fa-tag text-green-400"></i>
+                <span>Labeled: <span id="stat-labeled" class="font-mono text-white font-bold">0</span></span>
+            </div>
+            <div class="flex items-center gap-1.5 bg-gray-700/50 px-3 py-1 rounded">
+                <i class="fa-solid fa-vector-square text-yellow-400"></i>
+                <span>Active: <span id="stat-active-cube" class="font-mono text-white font-bold">None</span></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex flex-1 overflow-hidden">
         
-        <!-- Load File -->
-        <div>
-            <label class="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded cursor-pointer text-sm font-medium transition-colors">
-                <span id="upload-icon">📂</span> Load OBJ File
-                <input type="file" id="file-input" accept=".obj" class="hidden">
-            </label>
-        </div>
+        <!-- Left Sidebar: Tools & Controls (Frequently Used) -->
+        <aside class="w-72 bg-gray-850 border-r border-gray-700 flex flex-col shrink-0 overflow-y-auto">
+             <!-- Selection Mode -->
+             <div class="p-4 border-b border-gray-700">
+                <h2 class="text-xs font-bold uppercase text-gray-400 mb-3 tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-mouse-pointer"></i> Interaction
+                </h2>
+                <button id="selection-mode-btn" class="w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-md border border-gray-600 transition-all group flex flex-col items-center justify-center gap-1 shadow-md">
+                    <i id="mode-icon" class="fa-solid fa-vector-square text-xl text-gray-400 group-hover:text-white transition-colors"></i>
+                    <span id="mode-text" class="text-xs font-bold text-gray-300">Add Box: OFF</span>
+                </button>
+                <p id="mode-desc" class="text-[10px] text-center text-gray-500 mt-2">
+                    Drag to rotate view
+                </p>
+            </div>
 
-        <!-- Add Box Mode Toggle -->
-        <div>
-            <button id="selection-mode-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium transition-colors">
-                <span id="mode-icon">⬜</span>
-                <span id="mode-text">Add Box Mode: OFF</span>
-            </button>
-            <p id="mode-desc" class="text-xs text-gray-400 mt-1 text-center">Drag to rotate view</p>
-        </div>
+            <!-- Transform Controls -->
+            <div id="transform-controls" class="p-4 border-b border-gray-700 hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-xs font-bold uppercase text-gray-400 tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-arrows-up-down-left-right"></i> Transform
+                    </h2>
+                </div>
+                
+                <!-- Tabs -->
+                <div class="flex bg-gray-800 rounded p-1 mb-4 shadow-inner">
+                    <button data-mode="translate" class="transform-tab flex-1 py-1.5 rounded text-[10px] font-bold text-gray-400 hover:text-white transition-colors">MOVE</button>
+                    <button data-mode="rotate" class="transform-tab flex-1 py-1.5 rounded text-[10px] font-bold text-gray-400 hover:text-white transition-colors">ROT</button>
+                    <button data-mode="scale" class="transform-tab flex-1 py-1.5 rounded text-[10px] font-bold text-gray-400 hover:text-white transition-colors">SCALE</button>
+                </div>
 
-        <!-- Stats -->
-        <div class="p-3 bg-gray-700 rounded text-sm space-y-1">
-            <div>Total Vertices: <span id="stat-total">0</span></div>
-            <div>Labeled: <span id="stat-labeled">0</span></div>
-            <div>Active Cube: <span id="stat-active-cube">None</span></div>
-        </div>
+                <!-- Inputs -->
+                <div id="transform-inputs" class="space-y-2">
+                    <!-- Inputs injected here -->
+                </div>
+            </div>
 
-        <!-- Transform Controls (Hidden by default) -->
-        <div id="transform-controls" class="hidden space-y-3">
-            <h3 class="font-semibold text-sm">Transform Active Cube</h3>
+            <!-- Appearance -->
+            <div class="p-4">
+                <h2 class="text-xs font-bold uppercase text-gray-400 mb-3 tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-eye"></i> Appearance
+                </h2>
+                
+                <!-- Point Size -->
+                <div class="mb-4 bg-gray-800 p-2 rounded border border-gray-700">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-[10px] text-gray-300 font-bold uppercase">Point Size</label>
+                        <span id="point-size-val" class="text-[10px] font-mono text-blue-400">0.200</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-dot text-[10px] text-gray-600"></i>
+                        <input type="range" id="point-size-slider" min="0.001" max="10.0" step="0.001" class="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                    </div>
+                </div>
+
+                <!-- Mesh Opacity -->
+                <div class="bg-gray-800 p-2 rounded border border-gray-700">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-[10px] text-gray-300 font-bold uppercase">Mesh Opacity</label>
+                        <span id="mesh-opacity-val" class="text-[10px] font-mono text-blue-400">0.50</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-ghost text-[10px] text-gray-600"></i>
+                        <input type="range" id="mesh-opacity-slider" min="0.0" max="1.0" step="0.01" class="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center: Canvas -->
+        <main id="canvas-container" class="flex-1 relative bg-black shadow-inner">
+            <!-- Overlay for mode info -->
+            <div class="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-none">
+                <div id="mode-status" class="bg-black/60 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/10 text-xs font-mono hidden flex items-center gap-2 shadow-lg">
+                    <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                    <span id="mode-text-overlay" class="text-yellow-400 font-bold tracking-wider"></span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar: Data & Categories -->
+        <aside class="w-64 bg-gray-850 border-l border-gray-700 flex flex-col shrink-0">
             
-            <!-- Mode Tabs -->
-            <div class="flex gap-2">
-                <button data-mode="translate" class="transform-tab flex-1 px-3 py-2 rounded bg-blue-600 text-xs font-bold">MOVE</button>
-                <button data-mode="rotate" class="transform-tab flex-1 px-3 py-2 rounded bg-gray-700 text-xs font-bold">ROT</button>
-                <button data-mode="scale" class="transform-tab flex-1 px-3 py-2 rounded bg-gray-700 text-xs font-bold">SCALE</button>
+            <!-- File Actions -->
+            <div class="p-4 border-b border-gray-700 bg-gray-800">
+                <h2 class="text-xs font-bold uppercase text-gray-400 mb-3 tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-folder-tree"></i> Data
+                </h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <!-- Load File -->
+                    <label class="cursor-pointer px-2 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs transition-colors flex flex-col items-center justify-center gap-1 border border-gray-600 hover:border-gray-500">
+                        <i class="fa-solid fa-upload text-blue-400 text-sm"></i>
+                        <span class="font-bold text-gray-300">Import</span>
+                        <input type="file" id="file-input" accept=".obj" class="hidden">
+                    </label>
+
+                    <!-- Export -->
+                    <button id="export-btn" class="px-2 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs transition-colors flex flex-col items-center justify-center gap-1 border border-gray-600 hover:border-gray-500">
+                        <i class="fa-solid fa-download text-purple-400 text-sm"></i>
+                        <span class="font-bold text-gray-300">Export</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Inputs Container -->
-            <div id="transform-inputs" class="space-y-2 text-sm">
-                <!-- Dynamically populated -->
+            <!-- Categories Header -->
+            <div class="p-3 border-b border-gray-700 flex items-center justify-between bg-gray-800/50">
+                <h2 class="text-xs font-bold uppercase text-gray-400 tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-list-ul"></i> Categories
+                </h2>
+                <button id="add-category-btn" class="w-5 h-5 flex items-center justify-center bg-blue-600 hover:bg-blue-500 rounded text-white transition-colors shadow-sm" title="Add New Category">
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                </button>
             </div>
-        </div>
-
-        <!-- Point Size Control -->
-        <div class="mb-4">
-            <label class="flex items-center justify-between text-sm font-semibold mb-1">
-                Point Size: <span id="point-size-val">0.200</span>
-            </label>
-            <input type="range" id="point-size-slider" min="0.001" max="10.0" step="0.001" value="0.2" class="w-full accent-blue-500">
-        </div>
-
-        <!-- Mesh Opacity Control -->
-        <div class="mb-4">
-            <label class="flex items-center justify-between text-sm font-semibold mb-1">
-                Mesh Opacity: <span id="mesh-opacity-val">0.50</span>
-            </label>
-            <input type="range" id="mesh-opacity-slider" min="0.0" max="1.0" step="0.01" value="0.5" class="w-full accent-blue-500">
-        </div>
-
-        <!-- Categories -->
-        <div class="space-y-2">
-            <div class="flex justify-between items-center">
-                <h3 class="font-semibold text-sm">Categories</h3>
-                <button id="add-category-btn" class="p-1 bg-green-600 hover:bg-green-700 rounded text-white font-bold px-2">+</button>
+            
+            <!-- Categories List -->
+            <div id="categories-list" class="flex-1 overflow-y-auto p-2 space-y-1 bg-gray-900/30">
+                <!-- Categories injected here -->
             </div>
-            <div id="categories-list" class="space-y-2">
-                <!-- Categories will be injected here -->
-            </div>
-        </div>
 
-        <!-- Export -->
-        <div class="mt-auto pt-4">
-            <button id="export-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm font-medium transition-colors">
-                💾 Export Labels
-            </button>
-        </div>
-        
-        <!-- Help -->
-        <div class="p-3 bg-gray-700 rounded text-xs space-y-1">
-            <h4 class="font-semibold mb-1">Controls:</h4>
-            <div>• Select category first</div>
-            <div>• Toggle Selection Mode ON</div>
-            <div>• Drag to create cube (max 1 per category)</div>
-            <div>• Click category to activate its cube</div>
-            <div>• Use sliders to transform active cube</div>
-        </div>
+            <!-- Category Legend -->
+            <div class="p-3 border-t border-gray-700 bg-gray-800 text-[10px] text-gray-500">
+                 <p class="text-center italic opacity-70">Select category to edit box</p>
+            </div>
+        </aside>
     </div>
-
-    <!-- Canvas -->
-    <div id="canvas-container" class="flex-1 relative bg-black"></div>
 
     <!-- Main Module Entry -->
     <script type="module" src="./js/main.js"></script>

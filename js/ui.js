@@ -59,18 +59,51 @@ export function initUI() {
 
 export function setSelectionMode(active) {
     state.selectionMode = active;
+    const icon = document.getElementById('mode-icon');
+    const overlay = document.getElementById('mode-status');
+    const overlayText = document.getElementById('mode-text-overlay');
+
     if (state.selectionMode) {
-        modeBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
-        modeBtn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
-        modeText.textContent = "Add Box Mode: ON";
-        modeDesc.textContent = "Drag to create/update cube for active category";
+        modeBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600', 'border-gray-600');
+        modeBtn.classList.add('bg-yellow-900/50', 'hover:bg-yellow-900/70', 'border-yellow-500');
+        
+        modeText.textContent = "Add Box: ON";
+        modeText.classList.remove('text-gray-300');
+        modeText.classList.add('text-yellow-400');
+        
+        if (icon) {
+            icon.classList.remove('text-gray-400');
+            icon.classList.add('text-yellow-400');
+        }
+
+        modeDesc.textContent = "Drag on points/faces to create box";
         globals.container.classList.add('crosshair');
+        
+        // Show Overlay
+        if (overlay && overlayText) {
+            overlay.classList.remove('hidden');
+            overlayText.textContent = "MODE: ADD BOX";
+        }
     } else {
-        modeBtn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
-        modeBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
-        modeText.textContent = "Add Box Mode: OFF";
+        modeBtn.classList.remove('bg-yellow-900/50', 'hover:bg-yellow-900/70', 'border-yellow-500');
+        modeBtn.classList.add('bg-gray-700', 'hover:bg-gray-600', 'border-gray-600');
+        
+        modeText.textContent = "Add Box: OFF";
+        modeText.classList.remove('text-yellow-400');
+        modeText.classList.add('text-gray-300');
+
+        if (icon) {
+            icon.classList.remove('text-yellow-400');
+            icon.classList.add('text-gray-400');
+        }
+
         modeDesc.textContent = "Drag to rotate view";
         globals.container.classList.remove('crosshair');
+
+        // Hide Overlay
+        if (overlay) {
+            overlay.classList.add('hidden');
+        }
     }
 }
 
@@ -155,15 +188,26 @@ export function renderCategories() {
         const isCubeActive = state.activeCubeId === cat.id;
 
         const div = document.createElement('div');
-        div.className = `p-2 rounded cursor-pointer border border-transparent ${isActive ? 'bg-gray-600' : 'bg-gray-700'} ${isCubeActive ? '!border-yellow-500' : ''}`;
+        // Use a slightly different background logic for active vs inactive
+        const bgClass = isActive ? 'bg-gray-700 border-l-4 border-l-blue-500' : 'bg-gray-800 hover:bg-gray-750 border-l-4 border-l-transparent';
+        const borderClass = isCubeActive ? '!border-r-4 !border-r-yellow-500' : '';
+        
+        div.className = `p-2 rounded-sm cursor-pointer mb-1 transition-all ${bgClass} ${borderClass}`;
         
         div.innerHTML = `
             <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded flex-shrink-0" style="background-color: ${cat.color}"></div>
-                <input type="text" class="category-name flex-1 bg-transparent outline-none min-w-0" value="${cat.name}">
-                <button class="delete-cat p-1 hover:bg-red-600 rounded flex-shrink-0">🗑️</button>
+                <div class="w-3 h-3 rounded-full shadow-sm flex-shrink-0" style="background-color: ${cat.color}"></div>
+                <input type="text" class="category-name flex-1 bg-transparent text-xs text-gray-200 outline-none min-w-0 focus:text-white font-medium" value="${cat.name}">
+                <button class="delete-cat w-6 h-6 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-600 rounded transition-colors flex-shrink-0" title="Delete Box">
+                    <i class="fa-solid fa-trash-can text-[10px]"></i>
+                </button>
             </div>
-            ${hasCube ? `<div class="text-xs text-gray-400 mt-1 ml-8">${count} pts • Has cube</div>` : ''}
+            ${hasCube ? `
+                <div class="flex items-center gap-1 mt-1 ml-5 text-[10px] text-gray-500">
+                    <i class="fa-solid fa-cube text-[8px]"></i>
+                    <span>${count} pts</span>
+                </div>
+            ` : ''}
         `;
 
         div.addEventListener('click', (e) => {
@@ -344,14 +388,14 @@ function createTransformControlBase(axis, cubeData, mode) {
     container.appendChild(labelSpan);
 
     const minusBtn = document.createElement('button');
-    minusBtn.className = "w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-lg leading-none font-bold text-gray-200 transition-colors pb-1";
+    minusBtn.className = "w-9 h-8 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-xl leading-none font-bold text-gray-200 transition-colors pb-1 shadow-sm";
     minusBtn.textContent = "-";
     container.appendChild(minusBtn);
 
     // Indicator (Editable Input)
     const indicator = document.createElement('input');
     indicator.type = "text"; // Text to allow "step 0.01" or "5°" formatting initially
-    indicator.className = "flex-1 text-center text-xs text-gray-500 font-mono bg-transparent outline-none border-b border-transparent focus:border-blue-500 focus:text-white transition-colors";
+    indicator.className = "flex-1 text-center text-[10px] text-gray-400 font-mono bg-transparent outline-none border-b border-transparent focus:border-blue-500 focus:text-white transition-colors h-8";
     
     // Step Calculation
     const getStep = () => {
@@ -522,7 +566,7 @@ function createTransformControlBase(axis, cubeData, mode) {
     container.appendChild(indicator);
 
     const plusBtn = document.createElement('button');
-    plusBtn.className = "w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-lg leading-none font-bold text-gray-200 transition-colors pb-1";
+    plusBtn.className = "w-9 h-8 bg-gray-600 hover:bg-gray-500 rounded flex items-center justify-center text-xl leading-none font-bold text-gray-200 transition-colors pb-1 shadow-sm";
     plusBtn.textContent = "+";
     container.appendChild(plusBtn);
 

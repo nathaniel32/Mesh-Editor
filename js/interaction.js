@@ -52,14 +52,22 @@ function handleMouseDown(e) {
         }
 
         if (hitPoint) {
+            const oldCube = state.labeledCubes.get(state.activeCategory);
+            let isReplacement = false;
+            
+            // Confirmation logic
+            if (oldCube && oldCube.box) {
+                const category = state.categories.find(c => c.id === state.activeCategory);
+                const confirmed = window.confirm(`Category "${category ? category.name : state.activeCategory}" already has a bounding box. Do you want to replace it?`);
+                if (!confirmed) return; // Abort if user cancels
+                
+                globals.scene.remove(oldCube.box);
+                isReplacement = true;
+            }
+
             boxCreated = true;
             state.selectionStart = hitPoint.clone();
             state.isCreatingCube = true;
-
-            const oldCube = state.labeledCubes.get(state.activeCategory);
-            if (oldCube && oldCube.box) {
-                globals.scene.remove(oldCube.box);
-            }
 
             const category = state.categories.find(c => c.id === state.activeCategory);
             const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
@@ -87,6 +95,14 @@ function handleMouseDown(e) {
                 box: box
             });
             state.activeCubeId = state.activeCategory;
+            
+            if (isReplacement) {
+                updateVerticesInCube(state.activeCategory);
+                state.isCreatingCube = false;
+                state.selectionStart = null;
+                setSelectionMode(false);
+            }
+
             updateStatsUI();
             renderCategories();
             updateTransformControls();
@@ -164,9 +180,13 @@ function handleMouseUp() {
         updateVerticesInCube(state.activeCategory);
         state.isCreatingCube = false;
         state.selectionStart = null;
-        setSelectionMode(false); 
         updateAllIndicators();
     }
+    
+    if (state.selectionMode) {
+        setSelectionMode(false);
+    }
+
     state.isRotating = false;
 }
 
