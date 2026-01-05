@@ -296,71 +296,63 @@ function renderTransformInputs() {
     const cubeData = state.labeledCubes.get(state.activeCubeId);
     if (!cubeData) return;
 
-    // Space Toggle Helper
-    const createSpaceToggle = () => {
-        const toggleContainer = document.createElement('div');
-        toggleContainer.className = "flex justify-end mb-2";
+    // Helper for segmented controls
+    const createSegmentedControl = (label, options, currentValue, onChange) => {
+        const container = document.createElement('div');
+        container.className = "mb-2";
         
-        let btnColor = "bg-indigo-600 hover:bg-indigo-500";
-        if (state.transformSpace === 'local') btnColor = "bg-teal-600 hover:bg-teal-500";
-        if (state.transformSpace === 'view') btnColor = "bg-orange-600 hover:bg-orange-500";
+        const labelDiv = document.createElement('div');
+        labelDiv.className = "text-[10px] font-bold text-gray-400 mb-1 uppercase";
+        labelDiv.textContent = label;
+        container.appendChild(labelDiv);
 
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = "px-2 py-1 text-xs font-bold rounded " + btnColor;
-        toggleBtn.textContent = "Axis: " + state.transformSpace.toUpperCase();
-        toggleBtn.onclick = () => {
-            if (state.transformSpace === 'global') state.transformSpace = 'local';
-            else if (state.transformSpace === 'local') state.transformSpace = 'view';
-            else state.transformSpace = 'global';
-            renderTransformInputs();
-        };
-        toggleContainer.appendChild(toggleBtn);
-        transformInputs.appendChild(toggleContainer);
+        const btnGroup = document.createElement('div');
+        btnGroup.className = "flex bg-gray-800 rounded p-1 gap-1";
+        
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            const isActive = currentValue === opt.value;
+            const activeColor = opt.activeColor || "bg-blue-600 hover:bg-blue-500 text-white";
+            const inactiveColor = "bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-gray-200";
+            
+            btn.className = `flex-1 py-1 px-2 rounded text-[10px] font-bold transition-all ${isActive ? activeColor : inactiveColor}`;
+            btn.textContent = opt.label;
+            btn.onclick = () => onChange(opt.value);
+            btnGroup.appendChild(btn);
+        });
+        
+        container.appendChild(btnGroup);
+        transformInputs.appendChild(container);
     };
 
-    if (state.transformMode === 'translate') {
-        createSpaceToggle();
-        ['x', 'y', 'z'].forEach(axis => {
-            createMoveControl(axis, cubeData);
-        });
-    } else if (state.transformMode === 'rotate') {
-        createSpaceToggle();
-        ['x', 'y', 'z'].forEach(axis => {
-            createRotateControl(axis, cubeData);
-        });
-    } else if (state.transformMode === 'scale') {
-        createSpaceToggle();
+    // Space Toggle (Axis)
+    createSegmentedControl("Axis Space", [
+        { label: "Global", value: 'global', activeColor: "bg-indigo-600 hover:bg-indigo-500 text-white" },
+        { label: "Local", value: 'local', activeColor: "bg-teal-600 hover:bg-teal-500 text-white" },
+        { label: "View", value: 'view', activeColor: "bg-orange-600 hover:bg-orange-500 text-white" }
+    ], state.transformSpace, (val) => {
+        state.transformSpace = val;
+        renderTransformInputs();
+    });
+
+    if (state.transformMode === 'scale') {
         // Anchor Toggle
-        const anchorContainer = document.createElement('div');
-        anchorContainer.className = "flex justify-end mb-2";
-        
-        let anchorText = "ANCHOR: CENTER";
-        let anchorColor = "bg-gray-600 hover:bg-gray-500";
-        
-        if (state.scaleAnchor === 'positive') {
-            anchorText = "ANCHOR: POS (+)";
-            anchorColor = "bg-green-600 hover:bg-green-500";
-        } else if (state.scaleAnchor === 'negative') {
-            anchorText = "ANCHOR: NEG (-)";
-            anchorColor = "bg-red-600 hover:bg-red-500";
-        }
-
-        const anchorBtn = document.createElement('button');
-        anchorBtn.className = "px-2 py-1 text-xs font-bold rounded " + anchorColor;
-        anchorBtn.textContent = anchorText;
-        anchorBtn.onclick = () => {
-            if (state.scaleAnchor === 'center') state.scaleAnchor = 'positive';
-            else if (state.scaleAnchor === 'positive') state.scaleAnchor = 'negative';
-            else state.scaleAnchor = 'center';
+        createSegmentedControl("Scale Anchor", [
+            { label: "Center", value: 'center', activeColor: "bg-gray-500 hover:bg-gray-400 text-white" },
+            { label: "Pos (+)", value: 'positive', activeColor: "bg-green-600 hover:bg-green-500 text-white" },
+            { label: "Neg (-)", value: 'negative', activeColor: "bg-red-600 hover:bg-red-500 text-white" }
+        ], state.scaleAnchor, (val) => {
+            state.scaleAnchor = val;
             renderTransformInputs();
-        };
-        anchorContainer.appendChild(anchorBtn);
-        transformInputs.appendChild(anchorContainer);
-
-        ['x', 'y', 'z'].forEach(axis => {
-            createScaleControl(axis, cubeData);
         });
     }
+
+    // Render Axis Inputs
+    ['x', 'y', 'z'].forEach(axis => {
+        if (state.transformMode === 'translate') createMoveControl(axis, cubeData);
+        else if (state.transformMode === 'rotate') createRotateControl(axis, cubeData);
+        else if (state.transformMode === 'scale') createScaleControl(axis, cubeData);
+    });
 }
 
 // ... Transform Helper Functions (Move, Rotate, Scale) ... 
