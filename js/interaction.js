@@ -150,19 +150,7 @@ function handleMouseDown(e) {
         }
 
         if (hitPoint) {
-            const oldCube = state.labeledCubes.get(state.activeCategory);
-            let isReplacement = false;
-            
-            // Confirmation logic
-            if (oldCube && oldCube.box) {
-                const category = state.categories.find(c => c.id === state.activeCategory);
-                const confirmed = window.confirm(`Category "${category ? category.name : state.activeCategory}" already has a bounding box. Do you want to replace it?`);
-                if (!confirmed) return; // Abort if user cancels
-                
-                globals.scene.remove(oldCube.box);
-                isReplacement = true;
-            }
-
+            // Create new cube
             boxCreated = true;
             state.selectionStart = hitPoint.clone();
             state.isCreatingCube = true;
@@ -187,20 +175,16 @@ function handleMouseDown(e) {
             box.scale.set(s, s, s); 
             globals.scene.add(box);
 
-            state.labeledCubes.set(state.activeCategory, {
+            const cubeId = ++state.cubeIdCounter;
+            state.labeledCubes.set(cubeId, {
+                id: cubeId,
+                categoryId: state.activeCategory,
                 cube: { position: state.selectionStart.clone(), scale: new THREE.Vector3(s, s, s), rotation: new THREE.Euler() },
                 vertices: [],
                 box: box
             });
-            state.activeCubeId = state.activeCategory;
+            state.activeCubeId = cubeId;
             
-            if (isReplacement) {
-                updateVerticesInCube(state.activeCategory);
-                state.isCreatingCube = false;
-                state.selectionStart = null;
-                setSelectionMode(false);
-            }
-
             updateStatsUI();
             renderCategories();
             updateTransformControls();
@@ -232,7 +216,7 @@ function handleMouseMove(e) {
         const intersect = new THREE.Vector3();
         raycaster.ray.intersectPlane(plane, intersect);
 
-        const cubeData = state.labeledCubes.get(state.activeCategory);
+        const cubeData = state.labeledCubes.get(state.activeCubeId);
         if (cubeData && cubeData.box && intersect) {
             const center = new THREE.Vector3().addVectors(state.selectionStart, intersect).multiplyScalar(0.5);
             const size = new THREE.Vector3().subVectors(intersect, state.selectionStart).abs();
@@ -277,7 +261,7 @@ function handleMouseMove(e) {
 
 function handleMouseUp() {
     if (state.isCreatingCube) {
-        updateVerticesInCube(state.activeCategory);
+        updateVerticesInCube(state.activeCubeId);
         state.isCreatingCube = false;
         state.selectionStart = null;
         updateAllIndicators();
@@ -300,18 +284,20 @@ function handleWheel(e) {
 }
 
 // Logic for deleting a cube
-export function deleteCube(categoryId) {
-    const cubeData = state.labeledCubes.get(categoryId);
+export function deleteCube(cubeId, skipUiUpdate = false) {
+    const cubeData = state.labeledCubes.get(cubeId);
     if (cubeData && cubeData.box) {
         globals.scene.remove(cubeData.box);
     }
-    state.labeledCubes.delete(categoryId);
-    if (state.activeCubeId === categoryId) {
+    state.labeledCubes.delete(cubeId);
+    if (state.activeCubeId === cubeId) {
         state.activeCubeId = null;
         updateTransformControls();
     }
-    updateVerticesInCube(categoryId);
-    updateStatsUI();
-    renderCategories();
-    createPointCloud(state.vertices);
+    
+    if (!skipUiUpdate) {
+        updateStatsUI();
+        renderCategories();
+        createPointCloud(state.vertices);
+    }
 }

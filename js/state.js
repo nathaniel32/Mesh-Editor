@@ -4,7 +4,8 @@ export const state = {
     selectionMode: false,
     isCreatingCube: false,
     selectionStart: null,
-    labeledCubes: new Map(), // categoryId -> {cube: {pos, scale, rot}, vertices: [], box: Mesh}
+    labeledCubes: new Map(), // cubeId -> {id, categoryId, cube: {pos, scale, rot}, vertices: [], box: Mesh}
+    cubeIdCounter: 0,
     activeCubeId: null,
     categories: [...config.defaultCategories], 
     activeCategory: config.defaultCategories.length > 0 ? config.defaultCategories[0].id : null,

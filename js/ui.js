@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { state } from './state.js';
 import { globals } from './globals.js';
 import { config } from './config.js';
-import { loadOBJ, updateVerticesInCube } from './loader.js';
+import { loadOBJ, updateVerticesInCube, createPointCloud } from './loader.js';
 import { deleteCube } from './interaction.js';
 
 // DOM Elements
@@ -172,8 +172,18 @@ export function updateStatsUI() {
     document.getElementById('stat-total').textContent = state.stats.totalVertices;
     document.getElementById('stat-labeled').textContent = state.stats.labeled;
     
-    const activeCat = state.categories.find(c => c.id === state.activeCubeId);
-    document.getElementById('stat-active-cube').textContent = activeCat ? activeCat.name : 'None';
+    let activeName = 'None';
+    if (state.activeCubeId) {
+        const cube = state.labeledCubes.get(state.activeCubeId);
+        if (cube) {
+            const cat = state.categories.find(c => c.id === cube.categoryId);
+            if (cat) activeName = `${cat.name} (Cube ${cube.id})`;
+        }
+    } else if (state.activeCategory !== null) {
+        const cat = state.categories.find(c => c.id === state.activeCategory);
+        if (cat) activeName = cat.name;
+    }
+    document.getElementById('stat-active-cube').textContent = activeName;
 }
 
 export function renderCategories() {
@@ -181,55 +191,38 @@ export function renderCategories() {
     list.innerHTML = '';
     
     state.categories.forEach(cat => {
-        const cubeData = state.labeledCubes.get(cat.id);
-        const hasCube = !!cubeData;
-        const count = cubeData ? cubeData.vertices.length : 0;
-        const isActive = state.activeCategory === cat.id;
-        const isCubeActive = state.activeCubeId === cat.id;
+        const cubes = Array.from(state.labeledCubes.values()).filter(c => c.categoryId === cat.id);
+        const isActiveCat = state.activeCategory === cat.id;
 
-        const div = document.createElement('div');
-        // Use a slightly different background logic for active vs inactive
-        const bgClass = isActive ? 'bg-gray-700 border-l-4 border-l-blue-500' : 'bg-gray-800 hover:bg-gray-750 border-l-4 border-l-transparent';
-        const borderClass = isCubeActive ? '!border-r-4 !border-r-yellow-500' : '';
+        const catDiv = document.createElement('div');
+        catDiv.className = `rounded-sm mb-1 border-l-4 transition-all ${isActiveCat ? 'bg-gray-800 border-l-blue-500' : 'bg-gray-800/50 border-l-transparent hover:bg-gray-800'}`;
         
-        div.className = `p-2 rounded-sm cursor-pointer mb-1 transition-all ${bgClass} ${borderClass} group/item`;
-        
-        div.innerHTML = `
-            <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full shadow-sm flex-shrink-0" style="background-color: ${cat.color}"></div>
-                <input type="text" class="category-name flex-1 bg-transparent text-xs text-gray-200 outline-none min-w-0 font-medium pointer-events-none" value="${cat.name}" readonly>
-                <button class="delete-cat w-6 h-6 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-600 rounded transition-colors flex-shrink-0" title="Delete Box">
-                    <i class="fa-solid fa-trash-can text-[10px]"></i>
-                </button>
-            </div>
-            ${hasCube ? `
-                <div class="flex items-center gap-1 mt-1 ml-5 text-[10px] text-gray-500">
-                    <i class="fa-solid fa-cube text-[8px]"></i>
-                    <span>${count} pts</span>
-                </div>
-            ` : ''}
+        // Category Header
+        const header = document.createElement('div');
+        header.className = "flex items-center gap-2 p-2 cursor-pointer";
+        header.innerHTML = `
+            <div class="w-3 h-3 rounded-full shadow-sm flex-shrink-0" style="background-color: ${cat.color}"></div>
+            <input type="text" class="category-name flex-1 bg-transparent text-xs text-gray-200 outline-none min-w-0 font-medium pointer-events-none" value="${cat.name}" readonly>
+            <button class="delete-cat w-6 h-6 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-600 rounded transition-colors flex-shrink-0" title="Delete Category">
+                <i class="fa-solid fa-trash-can text-[10px]"></i>
+            </button>
         `;
 
-        const input = div.querySelector('.category-name');
+        const input = header.querySelector('.category-name');
 
-        div.addEventListener('click', (e) => {
-            if (e.target.tagName === 'INPUT' && !input.readOnly) return; // Allow interaction if editing
+        // Select Category
+        header.addEventListener('click', (e) => {
+            if (e.target.tagName === 'INPUT' && !input.readOnly) return; 
             if (e.target.closest('.delete-cat')) return;
             
-            // Prevent re-render if already active to allow dblclick
-            if (state.activeCategory === cat.id) return;
-
-            state.activeCategory = cat.id;
-            if (hasCube) {
-                state.activeCubeId = cat.id;
-                updateTransformControls();
+            if (state.activeCategory !== cat.id) {
+                state.activeCategory = cat.id;
+                renderCategories();
             }
-            updateStatsUI();
-            renderCategories();
         });
 
-        // Double click to rename
-        div.addEventListener('dblclick', () => {
+        // Rename Category
+        header.addEventListener('dblclick', () => {
             input.readOnly = false;
             input.classList.remove('pointer-events-none', 'text-gray-200');
             input.classList.add('bg-gray-950', 'ring-1', 'ring-blue-500', 'px-1', 'rounded-sm', 'text-white');
@@ -248,17 +241,67 @@ export function renderCategories() {
             if (e.key === 'Enter') input.blur();
         });
 
-        div.querySelector('.delete-cat').addEventListener('click', (e) => {
+        // Delete Category
+        header.querySelector('.delete-cat').addEventListener('click', (e) => {
             e.stopPropagation();
-            deleteCube(cat.id);
-            state.categories = state.categories.filter(c => c.id !== cat.id);
-            if (state.activeCategory === cat.id && state.categories.length > 0) {
-                state.activeCategory = state.categories[0].id;
+            if (confirm(`Delete category "${cat.name}" and all its cubes?`)) {
+                cubes.forEach(c => deleteCube(c.id, true)); 
+                
+                state.categories = state.categories.filter(c => c.id !== cat.id);
+                if (state.activeCategory === cat.id && state.categories.length > 0) {
+                    state.activeCategory = state.categories[0].id;
+                } else if (state.categories.length === 0) {
+                    state.activeCategory = null;
+                }
+                
+                updateStatsUI();
+                renderCategories();
+                createPointCloud(state.vertices);
             }
-            renderCategories();
         });
 
-        list.appendChild(div);
+        catDiv.appendChild(header);
+
+        // Cubes List
+        if (cubes.length > 0) {
+            const cubeList = document.createElement('div');
+            cubeList.className = "pl-6 pr-2 pb-2 space-y-1";
+            
+            cubes.forEach((cube, index) => {
+                const isCubeActive = state.activeCubeId === cube.id;
+                const cubeItem = document.createElement('div');
+                cubeItem.className = `flex items-center justify-between p-1.5 rounded text-[10px] cursor-pointer transition-colors ${isCubeActive ? 'bg-blue-900/30 text-blue-200 border border-blue-800' : 'bg-gray-900/50 text-gray-400 hover:bg-gray-700 hover:text-gray-200 border border-transparent'}`;
+                
+                cubeItem.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-cube text-[8px] ${isCubeActive ? 'text-blue-400' : 'text-gray-600'}"></i>
+                        <span>Cube ${index + 1} <span class="opacity-50">(${cube.vertices.length} pts)</span></span>
+                    </div>
+                    <button class="delete-cube w-4 h-4 flex items-center justify-center hover:text-red-400 rounded transition-colors" title="Delete Cube">
+                        <i class="fa-solid fa-xmark text-[10px]"></i>
+                    </button>
+                `;
+
+                cubeItem.addEventListener('click', (e) => {
+                    if (e.target.closest('.delete-cube')) return;
+                    state.activeCubeId = cube.id;
+                    state.activeCategory = cat.id; // Also select parent category
+                    updateTransformControls();
+                    updateStatsUI();
+                    renderCategories();
+                });
+
+                cubeItem.querySelector('.delete-cube').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteCube(cube.id);
+                });
+
+                cubeList.appendChild(cubeItem);
+            });
+            catDiv.appendChild(cubeList);
+        }
+
+        list.appendChild(catDiv);
     });
 }
 
@@ -646,8 +689,8 @@ function exportData() {
         },
         rawObj: state.rawObj,
         categories: state.categories,
-        cubes: Array.from(state.labeledCubes.entries()).map(([catId, cubeData]) => ({
-            categoryId: catId,
+        cubes: Array.from(state.labeledCubes.values()).map(cubeData => ({
+            categoryId: cubeData.categoryId,
             vertices: cubeData.vertices,
             cube: {
                 position: cubeData.cube.position,

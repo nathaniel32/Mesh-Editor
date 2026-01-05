@@ -115,9 +115,9 @@ export function createPointCloud(positions) {
         const vertexIndex = i / 3;
         let found = false;
 
-        state.labeledCubes.forEach((cubeData, catId) => {
+        state.labeledCubes.forEach((cubeData) => {
             if (cubeData.vertices.includes(vertexIndex)) {
-                const category = state.categories.find(c => c.id === catId);
+                const category = state.categories.find(c => c.id === cubeData.categoryId);
                 if (category) {
                     const color = new THREE.Color(category.color);
                     colors[i] = color.r;
@@ -169,8 +169,8 @@ export function createPointCloud(positions) {
 }
 
 // Re-export this for interaction.js to call
-export function updateVerticesInCube(categoryId) {
-    const cubeData = state.labeledCubes.get(categoryId);
+export function updateVerticesInCube(cubeId) {
+    const cubeData = state.labeledCubes.get(cubeId);
     if (!cubeData || !cubeData.box || !globals.pointsMesh) return;
 
     const box = cubeData.box;
