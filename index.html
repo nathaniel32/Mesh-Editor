@@ -74,6 +74,14 @@
             <input type="range" id="point-size-slider" min="0.001" max="10.0" step="0.001" value="0.2" class="w-full accent-blue-500">
         </div>
 
+        <!-- Mesh Opacity Control -->
+        <div class="mb-4">
+            <label class="flex items-center justify-between text-sm font-semibold mb-1">
+                Mesh Opacity: <span id="mesh-opacity-val">0.50</span>
+            </label>
+            <input type="range" id="mesh-opacity-slider" min="0.0" max="1.0" step="0.01" value="0.5" class="w-full accent-blue-500">
+        </div>
+
         <!-- Categories -->
         <div class="space-y-2">
             <div class="flex justify-between items-center">
@@ -127,11 +135,12 @@
             rawObj: { v: [], vn: [], f: [], other: [] }, // Store raw OBJ data
             isRotating: false,
             previousMousePosition: { x: 0, y: 0 },
-            pointSize: config.pointSize.defaultValue
+            pointSize: config.pointSize.defaultValue,
+            meshOpacity: 0.5
         };
 
         // --- Three.js Globals ---
-        let scene, camera, renderer, pointsMesh;
+        let scene, camera, renderer, pointsMesh, baseMesh;
         const container = document.getElementById('canvas-container');
 
         // --- Initialization ---
@@ -202,6 +211,29 @@
                 }
             });
 
+            // Mesh Opacity Slider
+            const opacitySlider = document.getElementById('mesh-opacity-slider');
+            const opacityVal = document.getElementById('mesh-opacity-val');
+            
+            opacitySlider.value = state.meshOpacity;
+            opacityVal.textContent = state.meshOpacity.toFixed(2);
+
+            opacitySlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                state.meshOpacity = val;
+                opacityVal.textContent = val.toFixed(2);
+                if (baseMesh) {
+                    baseMesh.material.opacity = val;
+                    baseMesh.visible = val > 0;
+                    
+                    // Toggle transparency mode
+                    const isOpaque = val >= 1.0;
+                    baseMesh.material.transparent = !isOpaque;
+                    baseMesh.material.depthWrite = isOpaque;
+                    baseMesh.material.needsUpdate = true;
+                }
+            });
+
             // UI Init
             renderCategories();
             updateTransformControls();
@@ -219,6 +251,7 @@
         function parseOBJ(text) {
             const lines = text.split('\n');
             const positions = [];
+            const indices = [];
             
             // Reset raw storage
             state.rawObj = { v: [], vn: [], f: [], other: [] };
@@ -243,6 +276,17 @@
                     state.rawObj.vn.push(trimmed);
                 } else if (type === 'f') {
                     state.rawObj.f.push(trimmed);
+                    // Parse indices
+                    const vertices = parts.slice(1);
+                    const faceIndices = vertices.map(v => {
+                        const indexStr = v.split('/')[0];
+                        return parseInt(indexStr) - 1;
+                    });
+                    
+                    // Triangulate (fan)
+                    for (let i = 1; i < faceIndices.length - 1; i++) {
+                        indices.push(faceIndices[0], faceIndices[i], faceIndices[i+1]);
+                    }
                 } else {
                     state.rawObj.other.push(trimmed);
                 }
@@ -261,9 +305,40 @@
             state.stats.labeled = 0;
             
             createPointCloud(positions);
+            createMesh(positions, indices);
             updateStatsUI();
             renderCategories(); // To update 'Has cube' status
             updateTransformControls();
+        }
+
+        function createMesh(positions, indices) {
+            if (baseMesh) scene.remove(baseMesh);
+
+            if (indices.length === 0) return;
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+
+            const isOpaque = state.meshOpacity >= 1.0;
+
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x808080,
+                roughness: 0.5,
+                metalness: 0.5,
+                transparent: !isOpaque,
+                opacity: state.meshOpacity,
+                side: THREE.DoubleSide,
+                depthWrite: isOpaque, // Solid when opaque, "ghost" when transparent
+                polygonOffset: true,
+                polygonOffsetFactor: 1, // Push back slightly so points render on top
+                polygonOffsetUnits: 1
+            });
+
+            baseMesh = new THREE.Mesh(geometry, material);
+            baseMesh.visible = state.meshOpacity > 0;
+            scene.add(baseMesh);
         }
 
         function createCircleTexture() {
