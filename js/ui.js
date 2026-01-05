@@ -380,8 +380,6 @@ function renderTransformInputs() {
 }
 
 // ... Transform Helper Functions (Move, Rotate, Scale) ... 
-// Due to length, I will condense these into helper functions within this module
-// that use the logic extracted from the original file.
 
 function createMoveControl(axis, cubeData) {
     createTransformControlBase(axis, cubeData, 'move');
@@ -442,82 +440,7 @@ function createTransformControlBase(axis, cubeData, mode) {
         const dist = globals.camera.position.distanceTo(cubeData.cube.position);
         return Math.max(config.interaction.transformMinStep, dist * config.interaction.transformStepFactor);
     };
-
-    // Helper to get current value based on mode/axis
-    const getCurrentValue = () => {
-        const box = cubeData.box;
-        if (mode === 'move') {
-             if (state.transformSpace === 'local') return 0; // Relative move logic usually starts at 0 for step
-             return box.position[axis]; // Global absolute for display? Or keep relative step display? 
-             // Request implies "edit value", usually means editing the Absolute Position/Rotation/Scale
-        } else if (mode === 'scale') {
-             // For scale, we edit the scale factor
-             // Determine axis index for scale vector
-             return box.scale[axis]; 
-        } else if (mode === 'rotate') {
-             // Rotation is tricky (Euler), let's stick to showing step for buttons, 
-             // but maybe absolute angle for input? 
-             // For simplicity and consistency with previous "step" display:
-             // user asked "value di transform bisa di ganti".
-             // If we change the middle text to an input, it should probably control the STEP size 
-             // OR the actual coordinate.
-             // Given the context of "step 0.01", it's likely they want to type the coordinate OR the step.
-             // Let's assume they want to type the STEP size manually since it currently displays "step X".
-             // WAIT, "value di transform" could mean the object's position/scale.
-             // BUT the UI currently shows "step 0.05".
-             // Let's make the STEP editable first as it replaces the "step" text.
-             return getStep();
-        }
-    };
-    
-    // Actually, looking at the previous UI, the center text was "step 0.1" or "5°".
-    // If I make it an input, users might expect to type "10" to move 10 units.
-    // Let's make it a value input for the PROPERTY (Pos/Scale) if feasible, 
-    // OR just a manual step input.
-    // "Value di transform" -> likely the value of the transformation (Position X, Scale Y).
-    // Let's try to display the actual value in the input, and buttons add/subtract step.
-    
-    // Correction: The user likely wants to see and edit the Position/Scale/Rotation values directly.
-    // The previous indicator showed "step ...". 
-    // Let's change the design:
-    // [-] [Value Input] [+]
-    
-    const updateDisplay = () => {
-        const box = cubeData.box;
-        let val = 0;
         
-        if (mode === 'move') {
-             // For move, showing global/local pos is complex due to spaces.
-             // If Global, show global pos.
-             if (state.transformSpace === 'global') {
-                 val = box.position[axis];
-             } else {
-                 // Local/View space 'move' is relative. 
-                 // Showing '0' is confusing? 
-                 // Let's stick to showing the STEP size for relative moves, 
-                 // OR switch to Global Position display always?
-                 // Let's try displaying the relevant value being modified.
-                 
-                 // Fallback: If space is not global, we can't easily show "The Value".
-                 // BUT, for Scale, it's always the local scale.
-                 // For Rotation, it's Euler.
-                 
-                 // Let's implement editing the STEP size for now, as that's what was there.
-                 // "step 0.1". User types "1.0", buttons now move by 1.0.
-                 // This is safer and preserves the relative movement logic.
-                 
-                 // RE-READING: "value di transform bisa di ganti"
-                 // usually means "I want to type X = 5.0".
-                 
-                 // Let's support Absolute Value editing for Global Move and Scale.
-                 // For others, we might have to stick to Step or implement complex conversion.
-            }
-        }
-    };
-    
-    // Let's go with: The input shows the ABSOLUTE value (where possible), and buttons inc/dec it.
-    // Exception: View/Local translation (relative).
-    
     let isEditing = false;
     
     const updateIndicator = () => {
