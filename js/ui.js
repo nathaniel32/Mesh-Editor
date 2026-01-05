@@ -493,28 +493,25 @@ function createTransformControlBase(axis, cubeData, mode) {
              val = Math.max(0.001, val); // Prevent 0 or neg
              box.scale[axis] = val;
              cubeData.cube.scale.copy(box.scale);
-             // Handle anchor logic if needed? 
-             // Direct edit usually implies "set to exactly this", centering is standard.
-             // If we want anchor logic on direct edit, we need diff.
-             // Let's keep it simple: Direct edit = set scale (center anchor implied or ignored)
         } else if (mode === 'move') {
              if (state.transformSpace === 'global') {
                  box.position[axis] = val;
                  cubeData.cube.position.copy(box.position);
              } else {
-                 // It was a step value
-                 // Update the config step factor temporarily? 
-                 // Or just allow custom step for this session?
-                 // Let's ignore custom step logic for now to avoid complexity 
-                 // and assume user wanted to edit Position.
-                 // If they type in "Local Move", maybe they mean "Move this much"?
-                 // No, "Value di transform" implies state. 
+                 // It was a step value, update the factor relative to current distance
+                 const dist = globals.camera.position.distanceTo(cubeData.cube.position);
+                 if (dist > 0) {
+                     config.interaction.transformStepFactor = val / dist;
+                 }
              }
+        } else if (mode === 'rotate') {
+             // Update the global rotation step
+             config.interaction.rotationStepDeg = Math.abs(val);
         }
         
         updateVerticesInCube(state.activeCubeId);
         isEditing = false;
-        updateIndicator();
+        updateAllIndicators();
     });
     
     // Keydown Enter to blur
