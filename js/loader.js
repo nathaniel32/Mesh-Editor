@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { globals } from './globals.js';
 import { config } from './config.js';
 import { createCircleTexture } from './utils.js';
-import { updateStatsUI, renderCategories, updateTransformControls } from './ui.js';
+import { updateStatsUI, renderCategories, updateTransformControls, updatePointSizeSlider } from './ui.js';
 
 export function loadOBJ(file) {
     const reader = new FileReader();
@@ -138,9 +138,19 @@ export function createPointCloud(positions) {
 
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     
+    // Compute bounding sphere early for auto-sizing and centering
+    geometry.computeBoundingSphere();
+    const center = geometry.boundingSphere.center;
+    const radius = geometry.boundingSphere.radius;
+
+    // Auto-calculate point size based on model scale
+    // Heuristic: Radius / 400 seems to provide a good balance
+    const autoSize = Math.max(config.pointSize.min, Math.min(config.pointSize.max, radius / 400));
+    updatePointSizeSlider(autoSize);
+
     const sprite = createCircleTexture();
     const material = new THREE.PointsMaterial({ 
-        size: state.pointSize, 
+        size: state.pointSize, // state.pointSize is updated by updatePointSizeSlider
         vertexColors: true, 
         sizeAttenuation: true,
         map: sprite,
@@ -152,9 +162,6 @@ export function createPointCloud(positions) {
     globals.scene.add(globals.pointsMesh);
 
     // Center camera logic (simple re-center)
-    geometry.computeBoundingSphere();
-    const center = geometry.boundingSphere.center;
-    const radius = geometry.boundingSphere.radius;
     if (state.labeledCubes.size === 0) {
         globals.camera.position.set(center.x + radius * 2, center.y + radius * 2, center.z + radius * 2);
         globals.camera.lookAt(center);

@@ -94,6 +94,19 @@ function setupPointSizeSlider() {
     });
 }
 
+export function updatePointSizeSlider(val) {
+    const sizeSlider = document.getElementById('point-size-slider');
+    const sizeVal = document.getElementById('point-size-val');
+    if (sizeSlider && sizeVal) {
+        sizeSlider.value = val;
+        sizeVal.textContent = val.toFixed(3);
+        state.pointSize = val; // Ensure state is synced
+        if (globals.pointsMesh) {
+            globals.pointsMesh.material.size = val;
+        }
+    }
+}
+
 function setupMeshOpacitySlider() {
     const opacitySlider = document.getElementById('mesh-opacity-slider');
     const opacityVal = document.getElementById('mesh-opacity-val');
