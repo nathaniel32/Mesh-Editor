@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { state } from './state.js';
 import { globals } from './globals.js';
 import { config } from './config.js';
@@ -10,10 +11,37 @@ export function initInteraction() {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     globals.renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
+
+    // Initialize TransformControls
+    globals.transformControls = new TransformControls(globals.camera, globals.renderer.domElement);
+    globals.transformControls.addEventListener('change', () => {
+        // Update vertices when object changes
+        if (state.activeCubeId) {
+             const cubeData = state.labeledCubes.get(state.activeCubeId);
+             if (cubeData && cubeData.box) {
+                // Sync the internal data model with the mesh
+                cubeData.cube.position.copy(cubeData.box.position);
+                cubeData.cube.rotation.copy(cubeData.box.rotation);
+                cubeData.cube.scale.copy(cubeData.box.scale);
+                
+                updateVerticesInCube(state.activeCubeId);
+                updateAllIndicators(); // Update UI inputs
+             }
+        }
+    });
+
+    globals.transformControls.addEventListener('dragging-changed', function (event) {
+        state.isTransforming = event.value;
+    });
+
+    globals.scene.add(globals.transformControls);
 }
 
 function handleMouseDown(e) {
     if (e.button !== 0) return;
+    if (state.isTransforming) return; 
+    if (globals.transformControls && globals.transformControls.axis) return; // Prevent conflict if hovering controls
+
     const rect = globals.renderer.domElement.getBoundingClientRect();
     
     if (e.clientX < rect.left || e.clientX > rect.right || 
@@ -151,7 +179,7 @@ function handleMouseMove(e) {
             cubeData.cube.scale.copy(cubeData.box.scale);
             updateAllIndicators();
         }
-    } else if (state.isRotating && globals.pointsMesh) {
+    } else if (state.isRotating && globals.pointsMesh && !state.isTransforming) {
         const deltaX = e.clientX - state.previousMousePosition.x;
         const deltaY = e.clientY - state.previousMousePosition.y;
 

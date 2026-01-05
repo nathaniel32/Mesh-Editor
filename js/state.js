@@ -15,6 +15,7 @@ export const state = {
     vertices: [], // Raw positions array
     rawObj: { v: [], vn: [], f: [], other: [] }, // Store raw OBJ data
     isRotating: false,
+    isTransforming: false,
     previousMousePosition: { x: 0, y: 0 },
     pointSize: config.pointSize.defaultValue,
     meshOpacity: 0.5

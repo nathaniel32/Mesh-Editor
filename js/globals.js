@@ -5,5 +5,6 @@ export const globals = {
     renderer: null,
     pointsMesh: null,
     baseMesh: null,
-    container: null
+    container: null,
+    transformControls: null
 };

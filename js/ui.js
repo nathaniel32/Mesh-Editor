@@ -265,9 +265,19 @@ export function renderCategories() {
 export function updateTransformControls() {
     if (!state.activeCubeId) {
         transformContainer.classList.add('hidden');
+        if (globals.transformControls) globals.transformControls.detach();
         return;
     }
     transformContainer.classList.remove('hidden');
+    
+    const cubeData = state.labeledCubes.get(state.activeCubeId);
+    if (globals.transformControls && cubeData && cubeData.box) {
+        if (globals.transformControls.object !== cubeData.box) {
+            globals.transformControls.attach(cubeData.box);
+        }
+        globals.transformControls.setMode(state.transformMode);
+        globals.transformControls.setSpace(state.transformSpace);
+    }
     
     document.querySelectorAll('.transform-tab').forEach(btn => {
         if (btn.dataset.mode === state.transformMode) {
@@ -332,6 +342,7 @@ function renderTransformInputs() {
         { label: "View", value: 'view', activeColor: "bg-orange-600 hover:bg-orange-500 text-white" }
     ], state.transformSpace, (val) => {
         state.transformSpace = val;
+        if (globals.transformControls) globals.transformControls.setSpace(state.transformSpace);
         renderTransformInputs();
     });
 
