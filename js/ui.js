@@ -192,12 +192,12 @@ export function renderCategories() {
         const bgClass = isActive ? 'bg-gray-700 border-l-4 border-l-blue-500' : 'bg-gray-800 hover:bg-gray-750 border-l-4 border-l-transparent';
         const borderClass = isCubeActive ? '!border-r-4 !border-r-yellow-500' : '';
         
-        div.className = `p-2 rounded-sm cursor-pointer mb-1 transition-all ${bgClass} ${borderClass}`;
+        div.className = `p-2 rounded-sm cursor-pointer mb-1 transition-all ${bgClass} ${borderClass} group/item`;
         
         div.innerHTML = `
             <div class="flex items-center gap-2">
                 <div class="w-3 h-3 rounded-full shadow-sm flex-shrink-0" style="background-color: ${cat.color}"></div>
-                <input type="text" class="category-name flex-1 bg-transparent text-xs text-gray-200 outline-none min-w-0 focus:text-white font-medium" value="${cat.name}">
+                <input type="text" class="category-name flex-1 bg-transparent text-xs text-gray-200 outline-none min-w-0 font-medium pointer-events-none" value="${cat.name}" readonly>
                 <button class="delete-cat w-6 h-6 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-600 rounded transition-colors flex-shrink-0" title="Delete Box">
                     <i class="fa-solid fa-trash-can text-[10px]"></i>
                 </button>
@@ -210,8 +210,15 @@ export function renderCategories() {
             ` : ''}
         `;
 
+        const input = div.querySelector('.category-name');
+
         div.addEventListener('click', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.closest('.delete-cat')) return;
+            if (e.target.tagName === 'INPUT' && !input.readOnly) return; // Allow interaction if editing
+            if (e.target.closest('.delete-cat')) return;
+            
+            // Prevent re-render if already active to allow dblclick
+            if (state.activeCategory === cat.id) return;
+
             state.activeCategory = cat.id;
             if (hasCube) {
                 state.activeCubeId = cat.id;
@@ -221,10 +228,26 @@ export function renderCategories() {
             renderCategories();
         });
 
-        div.querySelector('.category-name').addEventListener('input', (e) => {
-            cat.name = e.target.value;
+        // Double click to rename
+        div.addEventListener('dblclick', () => {
+            input.readOnly = false;
+            input.classList.remove('pointer-events-none', 'text-gray-200');
+            input.classList.add('bg-gray-950', 'ring-1', 'ring-blue-500', 'px-1', 'rounded-sm', 'text-white');
+            input.focus();
+            input.select();
         });
-        
+
+        input.addEventListener('blur', () => {
+            input.readOnly = true;
+            input.classList.add('pointer-events-none', 'text-gray-200');
+            input.classList.remove('bg-gray-950', 'ring-1', 'ring-blue-500', 'px-1', 'rounded-sm', 'text-white');
+            cat.name = input.value;
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') input.blur();
+        });
+
         div.querySelector('.delete-cat').addEventListener('click', (e) => {
             e.stopPropagation();
             deleteCube(cat.id);

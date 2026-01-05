@@ -5,8 +5,8 @@ export const config = {
     scene: {
         backgroundColor: '#1a1a1a',         // Canvas background
         cameraPosition: [5, 5, 5],          // Initial Camera XYZ
-        gridSize: 10,                       // Size of the grid helper
-        gridDivisions: 10,                  // Divisions in the grid
+        gridSize: 10000,                    // Size of the grid helper (Infinite feel)
+        gridDivisions: 1000,                // Divisions in the grid
         axesSize: 5                         // Size of the axes helper
     },
 

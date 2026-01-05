@@ -10,7 +10,7 @@ export function initScene() {
     globals.scene.background = new THREE.Color(config.scene.backgroundColor);
 
     // Camera
-    globals.camera = new THREE.PerspectiveCamera(75, globals.container.clientWidth / globals.container.clientHeight, 0.1, 1000);
+    globals.camera = new THREE.PerspectiveCamera(75, globals.container.clientWidth / globals.container.clientHeight, 0.1, 20000);
     globals.camera.position.set(...config.scene.cameraPosition);
     globals.camera.lookAt(0, 0, 0);
 
@@ -27,7 +27,8 @@ export function initScene() {
     globals.scene.add(directionalLight);
 
     // Helpers
-    const gridHelper = new THREE.GridHelper(config.scene.gridSize, config.scene.gridDivisions, 0x444444, 0x222222);
+    // Infinite-feel grid
+    const gridHelper = new THREE.GridHelper(config.scene.gridSize, config.scene.gridDivisions, 0x666666, 0x444444);
     globals.scene.add(gridHelper);
     const axesHelper = new THREE.AxesHelper(config.scene.axesSize);
     globals.scene.add(axesHelper);
