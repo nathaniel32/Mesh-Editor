@@ -67,7 +67,7 @@ export function parseOBJ(text) {
     state.stats.totalVertices = positions.length / 3;
     state.stats.labeled = 0;
     
-    createPointCloud(positions);
+    createPointCloud(positions, true);
     createMesh(positions, indices);
     updateStatsUI();
     renderCategories(); 
@@ -104,7 +104,7 @@ export function createMesh(positions, indices) {
     globals.scene.add(globals.baseMesh);
 }
 
-export function createPointCloud(positions) {
+export function createPointCloud(positions, updateSize = false) {
     if (globals.pointsMesh) globals.scene.remove(globals.pointsMesh);
 
     const geometry = new THREE.BufferGeometry();
@@ -143,10 +143,16 @@ export function createPointCloud(positions) {
     const center = geometry.boundingSphere.center;
     const radius = geometry.boundingSphere.radius;
 
-    // Auto-calculate point size based on model scale
-    // Heuristic: Radius / 400 seems to provide a good balance
-    const autoSize = Math.max(config.pointSize.min, Math.min(config.pointSize.max, radius / 400));
-    updatePointSizeSlider(autoSize);
+    if (updateSize) {
+        // Auto-calculate point size based on model scale
+        // Heuristic: Radius / 400 seems to provide a good balance
+        const autoSize = radius / 400;
+        const autoMin = radius / 10000;
+        const autoMax = radius / 10;
+        const autoStep = autoMin;
+
+        updatePointSizeSlider(autoSize, autoMin, autoMax, autoStep);
+    }
 
     const sprite = createCircleTexture();
     const material = new THREE.PointsMaterial({ 
@@ -162,7 +168,7 @@ export function createPointCloud(positions) {
     globals.scene.add(globals.pointsMesh);
 
     // Center camera logic (simple re-center)
-    if (state.labeledCubes.size === 0) {
+    if (state.labeledCubes.size === 0 && updateSize) {
         globals.camera.position.set(center.x + radius * 2, center.y + radius * 2, center.z + radius * 2);
         globals.camera.lookAt(center);
     }
@@ -193,6 +199,6 @@ export function updateVerticesInCube(cubeId) {
 
     cubeData.vertices = selected;
     updateStatsUI();
-    createPointCloud(state.vertices);
+    createPointCloud(state.vertices, false);
     renderCategories();
 }

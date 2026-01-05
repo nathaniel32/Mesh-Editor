@@ -117,9 +117,9 @@ function setupPointSizeSlider() {
     const sizeSlider = document.getElementById('point-size-slider');
     const sizeVal = document.getElementById('point-size-val');
     
-    sizeSlider.min = config.pointSize.min;
-    sizeSlider.max = config.pointSize.max;
-    sizeSlider.step = config.pointSize.step;
+    sizeSlider.min = state.pointSizeMin;
+    sizeSlider.max = state.pointSizeMax;
+    sizeSlider.step = state.pointSizeStep;
     sizeSlider.value = state.pointSize;
     sizeVal.textContent = state.pointSize.toFixed(3);
 
@@ -133,9 +133,23 @@ function setupPointSizeSlider() {
     });
 }
 
-export function updatePointSizeSlider(val) {
+export function updatePointSizeSlider(val, min = null, max = null, step = null) {
     const sizeSlider = document.getElementById('point-size-slider');
     const sizeVal = document.getElementById('point-size-val');
+    
+    if (min !== null) {
+        state.pointSizeMin = min;
+        sizeSlider.min = min;
+    }
+    if (max !== null) {
+        state.pointSizeMax = max;
+        sizeSlider.max = max;
+    }
+    if (step !== null) {
+        state.pointSizeStep = step;
+        sizeSlider.step = step;
+    }
+
     if (sizeSlider && sizeVal) {
         sizeSlider.value = val;
         sizeVal.textContent = val.toFixed(3);
@@ -742,7 +756,7 @@ function importData(e) {
             // 4. Update UI and Point Cloud Colors
             updateStatsUI();
             renderCategories();
-            createPointCloud(state.vertices); // This re-colors points based on labeledCubes
+            createPointCloud(state.vertices, true); // This re-colors points based on labeledCubes
             
             // Reset file input
             e.target.value = '';

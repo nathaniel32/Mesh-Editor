@@ -10,12 +10,9 @@ export const config = {
         axesSize: 5                         // Size of the axes helper
     },
 
-    // Point Size Settings
-    pointSize: {
-        defaultValue: 0.2,
-        min: 0.001,
-        max: 10.0,
-        step: 0.001
+    // Mesh Settings
+    mesh: {
+        opacity: 0.5
     },
 
     // Default Categories

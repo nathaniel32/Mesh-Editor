@@ -21,6 +21,9 @@ export const state = {
     currentMousePosition: { x: 0, y: 0 },
     lastScale: null,
     scaleDirection: 0,
-    pointSize: config.pointSize.defaultValue,
-    meshOpacity: 0.5
+    pointSize: 0.1, // Will be auto-calculated
+    pointSizeMin: 0.001,
+    pointSizeMax: 10.0,
+    pointSizeStep: 0.001,
+    meshOpacity: config.mesh.opacity
 };
