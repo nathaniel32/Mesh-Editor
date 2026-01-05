@@ -17,6 +17,9 @@ export const state = {
     isRotating: false,
     isTransforming: false,
     previousMousePosition: { x: 0, y: 0 },
+    currentMousePosition: { x: 0, y: 0 },
+    lastScale: null,
+    scaleDirection: 0,
     pointSize: config.pointSize.defaultValue,
     meshOpacity: 0.5
 };

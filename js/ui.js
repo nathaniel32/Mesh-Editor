@@ -272,11 +272,15 @@ export function updateTransformControls() {
     
     const cubeData = state.labeledCubes.get(state.activeCubeId);
     if (globals.transformControls && cubeData && cubeData.box) {
-        if (globals.transformControls.object !== cubeData.box) {
-            globals.transformControls.attach(cubeData.box);
+        if (state.transformMode === 'view') {
+            globals.transformControls.detach();
+        } else {
+            if (globals.transformControls.object !== cubeData.box) {
+                globals.transformControls.attach(cubeData.box);
+            }
+            globals.transformControls.setMode(state.transformMode);
+            globals.transformControls.setSpace(state.transformSpace);
         }
-        globals.transformControls.setMode(state.transformMode);
-        globals.transformControls.setSpace(state.transformSpace);
     }
     
     document.querySelectorAll('.transform-tab').forEach(btn => {
@@ -303,6 +307,15 @@ document.querySelectorAll('.transform-tab').forEach(btn => {
 function renderTransformInputs() {
     transformInputs.innerHTML = '';
     indicatorRefreshers = []; // Clear old refreshers
+    
+    if (state.transformMode === 'view') {
+        const info = document.createElement('div');
+        info.className = "text-center text-[10px] text-gray-500 italic p-2 border border-dashed border-gray-700 rounded";
+        info.textContent = "View Mode - Gizmo Hidden";
+        transformInputs.appendChild(info);
+        return;
+    }
+
     const cubeData = state.labeledCubes.get(state.activeCubeId);
     if (!cubeData) return;
 

@@ -19,6 +19,32 @@ export function initInteraction() {
         if (state.activeCubeId) {
              const cubeData = state.labeledCubes.get(state.activeCubeId);
              if (cubeData && cubeData.box) {
+                // Handle Anchored Scaling during interaction
+                if (state.isTransforming && state.transformMode === 'scale' && state.scaleDirection !== 0 && state.lastScale) {
+                    const axis = globals.transformControls.axis;
+                    if (axis && axis.length === 1) { // Ensure single axis
+                        const axisChar = axis.toLowerCase();
+                        const currentScale = cubeData.box.scale[axisChar];
+                        const prevScale = state.lastScale[axisChar];
+                        const delta = currentScale - prevScale;
+
+                        if (delta !== 0) {
+                            const shift = delta * 0.5 * state.scaleDirection;
+                            
+                            const localAxisVec = new THREE.Vector3();
+                            if (axisChar === 'x') localAxisVec.set(1, 0, 0);
+                            if (axisChar === 'y') localAxisVec.set(0, 1, 0);
+                            if (axisChar === 'z') localAxisVec.set(0, 0, 1);
+                            
+                            // Convert to world direction
+                            localAxisVec.applyQuaternion(cubeData.box.quaternion);
+                            
+                            cubeData.box.position.addScaledVector(localAxisVec, shift);
+                            state.lastScale.copy(cubeData.box.scale);
+                        }
+                    }
+                }
+
                 // Sync the internal data model with the mesh
                 cubeData.cube.position.copy(cubeData.box.position);
                 cubeData.cube.rotation.copy(cubeData.box.rotation);
@@ -32,9 +58,53 @@ export function initInteraction() {
 
     globals.transformControls.addEventListener('dragging-changed', function (event) {
         state.isTransforming = event.value;
+        if (state.isTransforming && state.transformMode === 'scale' && state.activeCubeId) {
+            const cubeData = state.labeledCubes.get(state.activeCubeId);
+            if (cubeData) {
+                state.lastScale = cubeData.cube.scale.clone();
+                const axis = globals.transformControls.axis;
+                if (axis && ['X', 'Y', 'Z'].includes(axis)) {
+                    state.scaleDirection = getDragDirection(axis, cubeData.box);
+                } else {
+                    state.scaleDirection = 0;
+                }
+            }
+        }
     });
 
     globals.scene.add(globals.transformControls);
+}
+
+function getDragDirection(axisChar, object) {
+    const axisName = axisChar.toLowerCase();
+    const localAxis = new THREE.Vector3();
+    if (axisName === 'x') localAxis.set(1, 0, 0);
+    if (axisName === 'y') localAxis.set(0, 1, 0);
+    if (axisName === 'z') localAxis.set(0, 0, 1);
+    
+    // Transform local axis to world direction
+    const worldAxis = localAxis.clone().applyQuaternion(object.quaternion).normalize();
+    
+    // Project Center to Screen
+    const center = object.position.clone();
+    center.project(globals.camera); 
+    
+    // Project Center + Axis to Screen
+    const offsetPoint = object.position.clone().add(worldAxis.multiplyScalar(1)); 
+    offsetPoint.project(globals.camera); 
+    
+    // Vector on screen
+    const screenAxis = new THREE.Vector2(offsetPoint.x - center.x, offsetPoint.y - center.y);
+    
+    // Mouse NDC
+    const rect = globals.renderer.domElement.getBoundingClientRect();
+    const mouseX = ((state.currentMousePosition.x - rect.left) / rect.width) * 2 - 1;
+    const mouseY = -((state.currentMousePosition.y - rect.top) / rect.height) * 2 + 1;
+    
+    const mouseVec = new THREE.Vector2(mouseX - center.x, mouseY - center.y);
+    
+    // Dot Product
+    return screenAxis.dot(mouseVec) >= 0 ? 1 : -1;
 }
 
 function handleMouseDown(e) {
@@ -144,6 +214,8 @@ function handleMouseDown(e) {
 }
 
 function handleMouseMove(e) {
+    state.currentMousePosition = { x: e.clientX, y: e.clientY };
+
     if (state.isCreatingCube && state.selectionStart) {
         const rect = globals.renderer.domElement.getBoundingClientRect();
         const mouse = new THREE.Vector2();

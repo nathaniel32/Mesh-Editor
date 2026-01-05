@@ -30,7 +30,7 @@ export const config = {
 
     // UI Defaults
     ui: {
-        initialTransformMode: 'translate', // 'translate', 'rotate', 'scale'
+        initialTransformMode: 'view',      // 'view', 'translate', 'rotate', 'scale'
         initialTransformSpace: 'view',      // 'view', 'local', 'global'
         pointDefaultColor: [0.8, 0.8, 0.8]  // RGB values 0-1
     },
