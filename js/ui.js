@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { state } from './state.js';
 import { globals } from './globals.js';
 import { config } from './config.js';
-import { loadOBJ, updateVerticesInCube, createPointCloud } from './loader.js';
-import { deleteCube } from './interaction.js';
+import { loadOBJ, updateVerticesInCube, createPointCloud, parseOBJ } from './loader.js';
+import { deleteCube, createCubeFromData } from './interaction.js';
 
 // DOM Elements
 const modeBtn = document.getElementById('selection-mode-btn');
@@ -44,6 +44,12 @@ export function initUI() {
 
     // Export
     document.getElementById('export-btn').addEventListener('click', exportData);
+
+    // Import
+    document.getElementById('import-btn').addEventListener('click', () => {
+        document.getElementById('import-file').click();
+    });
+    document.getElementById('import-file').addEventListener('change', importData);
 
     // Point Size
     setupPointSizeSlider();
@@ -679,6 +685,83 @@ function createTransformControlBase(axis, cubeData, mode) {
     plusBtn.addEventListener('click', () => performAction(1));
 
     transformInputs.appendChild(container);
+}
+
+function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const data = JSON.parse(event.target.result);
+            
+            // 1. Reconstruct OBJ and reload scene
+            // Check if rawObj exists
+            if (!data.rawObj) {
+                alert('Invalid file format: missing rawObj data.');
+                return;
+            }
+
+            const objText = reconstructOBJ(data.rawObj);
+            parseOBJ(objText);
+
+            // 2. Restore Categories
+            if (data.categories) {
+                state.categories = data.categories;
+                // If there's an active category, ensure it exists, else set to first
+                if (!state.categories.find(c => c.id === state.activeCategory)) {
+                    state.activeCategory = state.categories.length > 0 ? state.categories[0].id : null;
+                }
+            }
+            renderCategories();
+
+            // 3. Restore Cubes
+            if (data.cubes) {
+                data.cubes.forEach(cubeData => {
+                    // Restore complex objects (Vector3, Euler) from plain JSON objects
+                    // Handle potential differences in serialization (e.g. _x vs x for Euler)
+                    const rotX = cubeData.cube.rotation._x !== undefined ? cubeData.cube.rotation._x : cubeData.cube.rotation.x;
+                    const rotY = cubeData.cube.rotation._y !== undefined ? cubeData.cube.rotation._y : cubeData.cube.rotation.y;
+                    const rotZ = cubeData.cube.rotation._z !== undefined ? cubeData.cube.rotation._z : cubeData.cube.rotation.z;
+                    const rotOrder = cubeData.cube.rotation._order !== undefined ? cubeData.cube.rotation._order : (cubeData.cube.rotation.order || 'XYZ');
+
+                    const restoredData = {
+                        categoryId: cubeData.categoryId,
+                        vertices: cubeData.vertices,
+                        cube: {
+                            position: new THREE.Vector3(cubeData.cube.position.x, cubeData.cube.position.y, cubeData.cube.position.z),
+                            scale: new THREE.Vector3(cubeData.cube.scale.x, cubeData.cube.scale.y, cubeData.cube.scale.z),
+                            rotation: new THREE.Euler(rotX, rotY, rotZ, rotOrder)
+                        }
+                    };
+                    createCubeFromData(restoredData);
+                });
+            }
+
+            // 4. Update UI and Point Cloud Colors
+            updateStatsUI();
+            renderCategories();
+            createPointCloud(state.vertices); // This re-colors points based on labeledCubes
+            
+            // Reset file input
+            e.target.value = '';
+
+        } catch (err) {
+            console.error(err);
+            alert('Error importing file: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function reconstructOBJ(rawObj) {
+    const lines = [];
+    if (rawObj.v) lines.push(...rawObj.v);
+    if (rawObj.vn) lines.push(...rawObj.vn);
+    if (rawObj.other) lines.push(...rawObj.other);
+    if (rawObj.f) lines.push(...rawObj.f);
+    return lines.join('\n');
 }
 
 function exportData() {

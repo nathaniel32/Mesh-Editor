@@ -168,16 +168,23 @@
                 <div class="grid grid-cols-2 gap-2">
                     <!-- Load File -->
                     <label class="cursor-pointer px-2 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs transition-colors flex flex-col items-center justify-center gap-1 border border-gray-600 hover:border-gray-500">
-                        <i class="fa-solid fa-upload text-blue-400 text-sm"></i>
-                        <span class="font-bold text-gray-300">Import</span>
+                        <i class="fa-solid fa-cube text-blue-400 text-sm"></i>
+                        <span class="font-bold text-gray-300">Import OBJ</span>
                         <input type="file" id="file-input" accept=".obj" class="hidden">
                     </label>
 
-                    <!-- Export -->
-                    <button id="export-btn" class="px-2 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs transition-colors flex flex-col items-center justify-center gap-1 border border-gray-600 hover:border-gray-500">
-                        <i class="fa-solid fa-download text-purple-400 text-sm"></i>
-                        <span class="font-bold text-gray-300">Export</span>
-                    </button>
+            <!-- Export -->
+            <button id="export-btn" class="px-2 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs transition-colors flex flex-col items-center justify-center gap-1 border border-gray-600 hover:border-gray-500">
+                <i class="fa-solid fa-floppy-disk text-gray-400 text-sm"></i>
+                <span class="font-bold text-gray-300">Save Project</span>
+            </button>
+
+             <!-- Import -->
+             <button id="import-btn" class="px-2 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs transition-colors flex flex-col items-center justify-center gap-1 border border-gray-600 hover:border-gray-500">
+                <i class="fa-solid fa-folder-open text-gray-400 text-sm"></i>
+                <span class="font-bold text-gray-300">Open Project</span>
+            </button>
+            <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
             </div>
 

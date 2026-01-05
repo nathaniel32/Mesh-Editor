@@ -301,3 +301,47 @@ export function deleteCube(cubeId, skipUiUpdate = false) {
         createPointCloud(state.vertices);
     }
 }
+
+export function createCubeFromData(data) {
+    const category = state.categories.find(c => c.id === data.categoryId);
+    // Fallback if category doesn't exist (shouldn't happen if categories are restored first)
+    const color = category ? category.color : '#ff0000';
+
+    const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const boxMaterial = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(color),
+        transparent: true,
+        opacity: 0.3,
+    });
+    const box = new THREE.Mesh(boxGeometry, boxMaterial);
+    
+    const edgesGeometry = new THREE.EdgesGeometry(boxGeometry);
+    const edgesMaterial = new THREE.LineBasicMaterial({ color: new THREE.Color(color), linewidth: 2 });
+    const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
+    box.add(edges);
+
+    // Set transforms
+    box.position.copy(data.cube.position);
+    box.scale.copy(data.cube.scale);
+    box.rotation.copy(data.cube.rotation);
+
+    globals.scene.add(box);
+
+    const cubeId = ++state.cubeIdCounter;
+    
+    // Create the cube entry
+    const newCubeData = {
+        id: cubeId,
+        categoryId: data.categoryId,
+        cube: { 
+            position: data.cube.position, // Should be Vector3
+            scale: data.cube.scale,       // Should be Vector3
+            rotation: data.cube.rotation  // Should be Euler
+        },
+        vertices: data.vertices,
+        box: box
+    };
+
+    state.labeledCubes.set(cubeId, newCubeData);
+    return cubeId;
+}
