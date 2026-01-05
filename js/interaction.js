@@ -21,7 +21,7 @@ function handleMouseDown(e) {
 
     let boxCreated = false;
 
-    if (state.selectionMode && globals.pointsMesh) {
+    if (state.selectionMode) {
         const mouse = new THREE.Vector2();
         mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -30,11 +30,30 @@ function handleMouseDown(e) {
         raycaster.params.Points.threshold = Math.max(0.1, state.pointSize / 2);
         raycaster.setFromCamera(mouse, globals.camera);
 
-        const intersects = raycaster.intersectObject(globals.pointsMesh);
+        let hitPoint = null;
+        let distance = 0;
 
-        if (intersects.length > 0) {
+        // 1. Try hitting points
+        if (globals.pointsMesh) {
+            const intersects = raycaster.intersectObject(globals.pointsMesh);
+            if (intersects.length > 0) {
+                hitPoint = intersects[0].point;
+                distance = intersects[0].distance;
+            }
+        }
+
+        // 2. If no points hit, try hitting the base mesh (faces)
+        if (!hitPoint && globals.baseMesh && globals.baseMesh.visible) {
+            const intersects = raycaster.intersectObject(globals.baseMesh);
+            if (intersects.length > 0) {
+                hitPoint = intersects[0].point;
+                distance = intersects[0].distance;
+            }
+        }
+
+        if (hitPoint) {
             boxCreated = true;
-            state.selectionStart = intersects[0].point.clone();
+            state.selectionStart = hitPoint.clone();
             state.isCreatingCube = true;
 
             const oldCube = state.labeledCubes.get(state.activeCategory);
@@ -58,8 +77,7 @@ function handleMouseDown(e) {
 
             box.position.copy(state.selectionStart);
 
-            const dist = intersects[0].distance;
-            const s = dist * config.interaction.addBoxScaleFactor; 
+            const s = distance * config.interaction.addBoxScaleFactor; 
             box.scale.set(s, s, s); 
             globals.scene.add(box);
 
