@@ -289,19 +289,29 @@ export function renderCategories() {
             
             cubes.forEach((cube, index) => {
                 const isCubeActive = state.activeCubeId === cube.id;
-                const isVisible = cube.box.visible;
+                const isBoxVisible = cube.box.visible;
+                const isPointsVisible = cube.pointsVisible;
+                
                 const cubeItem = document.createElement('div');
                 cubeItem.className = `flex items-center justify-between p-1.5 rounded text-[10px] cursor-pointer transition-colors ${isCubeActive ? 'bg-blue-900/30 text-blue-200 border border-blue-800' : 'bg-gray-900/50 text-gray-400 hover:bg-gray-700 hover:text-gray-200 border border-transparent'}`;
                 
                 cubeItem.innerHTML = `
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-cube text-[8px] ${isCubeActive ? 'text-blue-400' : 'text-gray-600'}"></i>
-                        <span class="${!isVisible ? 'opacity-50 line-through' : ''}">Cube ${index + 1} <span class="opacity-50">(${cube.vertices.length} pts)</span></span>
+                        <span class="${(!isBoxVisible && !isPointsVisible) ? 'opacity-50 line-through' : ''}">Cube ${index + 1} <span class="opacity-50">(${cube.vertices.length} pts)</span></span>
                     </div>
-                    <div class="flex items-center">
-                        <button class="toggle-visibility w-4 h-4 flex items-center justify-center hover:text-gray-200 text-gray-400 rounded transition-colors mr-1" title="Toggle Visibility">
-                            <i class="fa-solid ${isVisible ? 'fa-eye' : 'fa-eye-slash'} text-[10px]"></i>
+                    <div class="flex items-center gap-1">
+                        <!-- Toggle Box -->
+                        <button class="toggle-box w-5 h-4 flex items-center justify-center hover:text-gray-200 ${isBoxVisible ? 'text-gray-400' : 'text-gray-600'} rounded transition-colors" title="Toggle Box Visibility">
+                            <i class="fa-solid ${isBoxVisible ? 'fa-vector-square' : 'fa-square'} text-[10px]"></i>
                         </button>
+                        <!-- Toggle Points -->
+                        <button class="toggle-points w-5 h-4 flex items-center justify-center hover:text-gray-200 ${isPointsVisible ? 'text-gray-400' : 'text-gray-600'} rounded transition-colors" title="Toggle Points Visibility">
+                            <i class="fa-solid ${isPointsVisible ? 'fa-circle-nodes' : 'fa-slash'} text-[10px]"></i>
+                        </button>
+                        
+                        <div class="w-px h-3 bg-gray-700 mx-1"></div>
+
                         <button class="delete-cube w-4 h-4 flex items-center justify-center hover:text-red-400 rounded transition-colors" title="Delete Cube">
                             <i class="fa-solid fa-xmark text-[10px]"></i>
                         </button>
@@ -309,29 +319,28 @@ export function renderCategories() {
                 `;
 
                 cubeItem.addEventListener('click', (e) => {
-                    if (e.target.closest('.delete-cube') || e.target.closest('.toggle-visibility')) return;
+                    if (e.target.closest('button')) return;
                     state.activeCubeId = cube.id;
-                    state.activeCategory = cat.id; // Also select parent category
+                    state.activeCategory = cat.id; 
                     updateTransformControls();
                     updateStatsUI();
                     renderCategories();
                 });
 
-                cubeItem.querySelector('.toggle-visibility').addEventListener('click', (e) => {
+                // Toggle Box
+                cubeItem.querySelector('.toggle-box').addEventListener('click', (e) => {
                     e.stopPropagation();
                     cube.box.visible = !cube.box.visible;
-                    
-                    // Update UI locally to avoid full re-render flickering
-                    const icon = e.currentTarget.querySelector('i');
-                    icon.className = `fa-solid ${cube.box.visible ? 'fa-eye' : 'fa-eye-slash'} text-[10px]`;
-                    const labelSpan = cubeItem.querySelector('span > span').previousSibling; 
-                    // Note: accessing text node might be brittle, let's just re-render categories or toggle class
-                    // Re-rendering is safer for consistency
-                    
-                    if (state.activeCubeId === cube.id) {
-                        updateTransformControls();
-                    }
-                    renderCategories(); 
+                    if (state.activeCubeId === cube.id) updateTransformControls();
+                    renderCategories();
+                });
+
+                // Toggle Points
+                cubeItem.querySelector('.toggle-points').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    cube.pointsVisible = !cube.pointsVisible;
+                    createPointCloud(state.vertices, false); // Refresh points
+                    renderCategories();
                 });
 
                 cubeItem.querySelector('.delete-cube').addEventListener('click', (e) => {
@@ -812,6 +821,7 @@ function exportData() {
         cubes: Array.from(state.labeledCubes.values()).map(cubeData => ({
             categoryId: cubeData.categoryId,
             vertices: cubeData.vertices,
+            pointsVisible: cubeData.pointsVisible, // Export visibility state
             cube: {
                 position: cubeData.cube.position,
                 scale: cubeData.cube.scale,

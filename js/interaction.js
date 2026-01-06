@@ -189,7 +189,8 @@ function handleMouseDown(e) {
                 categoryId: state.activeCategory,
                 cube: { position: state.selectionStart.clone(), scale: new THREE.Vector3(s, s, s), rotation: new THREE.Euler() },
                 vertices: [],
-                box: box
+                box: box,
+                pointsVisible: true
             });
             state.activeCubeId = cubeId;
             
@@ -380,7 +381,8 @@ export function createCubeFromData(data) {
             rotation: data.cube.rotation  // Should be Euler
         },
         vertices: data.vertices,
-        box: box
+        box: box,
+        pointsVisible: data.pointsVisible !== undefined ? data.pointsVisible : true
     };
 
     state.labeledCubes.set(cubeId, newCubeData);

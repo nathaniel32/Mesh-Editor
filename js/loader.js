@@ -107,41 +107,70 @@ export function createMesh(positions, indices) {
 export function createPointCloud(positions, updateSize = false) {
     if (globals.pointsMesh) globals.scene.remove(globals.pointsMesh);
 
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    // 1. Identify hidden vertices
+    const hiddenIndices = new Set();
+    state.labeledCubes.forEach(cube => {
+        if (!cube.pointsVisible) {
+            cube.vertices.forEach(vIdx => hiddenIndices.add(vIdx));
+        }
+    });
 
-    const colors = new Float32Array(positions.length);
-    for (let i = 0; i < colors.length; i += 3) {
+    const visiblePositions = [];
+    const visibleColors = [];
+
+    // Pre-calculate defColor
+    const defColor = config.ui.pointDefaultColor || [0.8, 0.8, 0.8];
+
+    // 2. Build filtered arrays
+    for (let i = 0; i < positions.length; i += 3) {
         const vertexIndex = i / 3;
-        let found = false;
 
+        // Skip if hidden
+        if (hiddenIndices.has(vertexIndex)) continue;
+
+        // Add Position
+        visiblePositions.push(positions[i], positions[i+1], positions[i+2]);
+
+        // Determine Color
+        let r = defColor[0];
+        let g = defColor[1];
+        let b = defColor[2];
+        
+        // Check if vertex is in any labeled cube
+        // Note: If a vertex is in multiple cubes, the last one wins (or we break on first).
+        // The original logic iterated all and let last one overwrite.
+        // We'll mimic that.
         state.labeledCubes.forEach((cubeData) => {
             if (cubeData.vertices.includes(vertexIndex)) {
                 const category = state.categories.find(c => c.id === cubeData.categoryId);
                 if (category) {
                     const color = new THREE.Color(category.color);
-                    colors[i] = color.r;
-                    colors[i + 1] = color.g;
-                    colors[i + 2] = color.b;
-                    found = true;
+                    r = color.r;
+                    g = color.g;
+                    b = color.b;
                 }
             }
         });
 
-        if (!found) {
-            const defColor = config.ui.pointDefaultColor || [0.8, 0.8, 0.8];
-            colors[i] = defColor[0];
-            colors[i + 1] = defColor[1];
-            colors[i + 2] = defColor[2];
-        }
+        visibleColors.push(r, g, b);
     }
 
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(visiblePositions, 3));
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(visibleColors, 3));
     
-    // Compute bounding sphere early for auto-sizing and centering
+    // Compute bounding sphere on the *visible* geometry for the mesh to work correctly
     geometry.computeBoundingSphere();
-    const center = geometry.boundingSphere.center;
-    const radius = geometry.boundingSphere.radius;
+
+    // 3. Camera Target & Auto-sizing logic
+    // We use the FULL positions for calculating the camera target to keep it stable
+    // regardless of visibility toggles.
+    const tempGeo = new THREE.BufferGeometry();
+    tempGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    tempGeo.computeBoundingSphere();
+    
+    const center = tempGeo.boundingSphere ? tempGeo.boundingSphere.center : new THREE.Vector3();
+    const radius = tempGeo.boundingSphere ? tempGeo.boundingSphere.radius : 10;
     
     // Initialize/Reset camera target to mesh center
     if (updateSize || !state.cameraTarget) {
@@ -150,7 +179,6 @@ export function createPointCloud(positions, updateSize = false) {
 
     if (updateSize) {
         // Auto-calculate point size based on model scale
-        // Heuristic: Radius / 400 seems to provide a good balance
         const autoSize = radius / 400;
         const autoMin = radius / 10000;
         const autoMax = radius / 10;
@@ -161,7 +189,7 @@ export function createPointCloud(positions, updateSize = false) {
 
     const sprite = createCircleTexture();
     const material = new THREE.PointsMaterial({ 
-        size: state.pointSize, // state.pointSize is updated by updatePointSizeSlider
+        size: state.pointSize, 
         vertexColors: true, 
         sizeAttenuation: true,
         map: sprite,
@@ -188,7 +216,8 @@ export function updateVerticesInCube(cubeId) {
     box.updateMatrixWorld();
 
     const inverseMatrix = new THREE.Matrix4().copy(box.matrixWorld).invert();
-    const positions = globals.pointsMesh.geometry.attributes.position.array;
+    // Use state.vertices as the source of truth, not the potentially modified mesh geometry
+    const positions = state.vertices; 
     const selected = [];
     const p = new THREE.Vector3();
     const limit = 0.5;
