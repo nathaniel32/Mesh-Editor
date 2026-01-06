@@ -16,7 +16,9 @@ export const state = {
     vertices: [], // Raw positions array
     rawObj: { v: [], vn: [], f: [], other: [] }, // Store raw OBJ data
     isRotating: false,
+    isPanning: false,
     isTransforming: false,
+    cameraTarget: null, // Will be initialized to mesh center
     previousMousePosition: { x: 0, y: 0 },
     currentMousePosition: { x: 0, y: 0 },
     lastScale: null,

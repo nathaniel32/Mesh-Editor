@@ -11,6 +11,7 @@ export function initInteraction() {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     globals.renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
+    globals.renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
 
     // Initialize TransformControls
     globals.transformControls = new TransformControls(globals.camera, globals.renderer.domElement);
@@ -108,7 +109,6 @@ function getDragDirection(axisChar, object) {
 }
 
 function handleMouseDown(e) {
-    if (e.button !== 0) return;
     if (state.isTransforming) return; 
     if (globals.transformControls && globals.transformControls.axis) return; // Prevent conflict if hovering controls
 
@@ -116,6 +116,14 @@ function handleMouseDown(e) {
     
     if (e.clientX < rect.left || e.clientX > rect.right || 
         e.clientY < rect.top || e.clientY > rect.bottom) return;
+
+    if (e.button === 2) { // Right click for panning
+        state.isPanning = true;
+        state.previousMousePosition = { x: e.clientX, y: e.clientY };
+        return;
+    }
+
+    if (e.button !== 0) return;
 
     let boxCreated = false;
 
@@ -239,7 +247,9 @@ function handleMouseMove(e) {
         const deltaX = e.clientX - state.previousMousePosition.x;
         const deltaY = e.clientY - state.previousMousePosition.y;
 
-        const center = globals.pointsMesh.geometry.boundingSphere ? globals.pointsMesh.geometry.boundingSphere.center : new THREE.Vector3();
+        // Use the dynamic camera target instead of the static mesh center
+        const center = state.cameraTarget || (globals.pointsMesh.geometry.boundingSphere ? globals.pointsMesh.geometry.boundingSphere.center : new THREE.Vector3());
+        
         const offset = new THREE.Vector3().subVectors(globals.camera.position, center);
         const distance = offset.length();
 
@@ -253,6 +263,36 @@ function handleMouseMove(e) {
 
         globals.camera.position.copy(center).add(offset);
         globals.camera.lookAt(center);
+
+        state.previousMousePosition = { x: e.clientX, y: e.clientY };
+        updateAllIndicators();
+    } else if (state.isPanning && !state.isTransforming) {
+        const deltaX = e.clientX - state.previousMousePosition.x;
+        const deltaY = e.clientY - state.previousMousePosition.y;
+
+        // Calculate pan speed based on distance to target
+        const center = state.cameraTarget || new THREE.Vector3();
+        const distance = globals.camera.position.distanceTo(center);
+        const panSpeed = distance * 0.001; 
+
+        const panOffset = new THREE.Vector3();
+        
+        // Pan Camera
+        globals.camera.translateX(-deltaX * panSpeed);
+        globals.camera.translateY(deltaY * panSpeed);
+        
+        // IMPORTANT: Also pan the target so rotation stays consistent relative to view
+        // We need to move the target by the same world-space vector the camera moved (inverted)
+        // Camera translateX/Y moves in local space.
+        const right = new THREE.Vector3().setFromMatrixColumn(globals.camera.matrix, 0);
+        const up = new THREE.Vector3().setFromMatrixColumn(globals.camera.matrix, 1);
+        
+        panOffset.addScaledVector(right, -deltaX * panSpeed);
+        panOffset.addScaledVector(up, deltaY * panSpeed);
+        
+        if (state.cameraTarget) {
+            state.cameraTarget.add(panOffset);
+        }
 
         state.previousMousePosition = { x: e.clientX, y: e.clientY };
         updateAllIndicators();
@@ -272,6 +312,7 @@ function handleMouseUp() {
     }
 
     state.isRotating = false;
+    state.isPanning = false;
 }
 
 function handleWheel(e) {

@@ -142,6 +142,11 @@ export function createPointCloud(positions, updateSize = false) {
     geometry.computeBoundingSphere();
     const center = geometry.boundingSphere.center;
     const radius = geometry.boundingSphere.radius;
+    
+    // Initialize/Reset camera target to mesh center
+    if (updateSize || !state.cameraTarget) {
+        state.cameraTarget = center.clone();
+    }
 
     if (updateSize) {
         // Auto-calculate point size based on model scale
@@ -170,7 +175,7 @@ export function createPointCloud(positions, updateSize = false) {
     // Center camera logic (simple re-center)
     if (state.labeledCubes.size === 0 && updateSize) {
         globals.camera.position.set(center.x + radius * 2, center.y + radius * 2, center.z + radius * 2);
-        globals.camera.lookAt(center);
+        globals.camera.lookAt(state.cameraTarget);
     }
 }
 
