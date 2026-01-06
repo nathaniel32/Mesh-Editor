@@ -24,7 +24,7 @@ export const state = {
     lastScale: null,
     scaleDirection: 0,
     pointSize: 0.1, // Will be auto-calculated
-    pointSizeMin: 0.001,
+    pointSizeMin: 0,
     pointSizeMax: 10.0,
     pointSizeStep: 0.001,
     meshOpacity: config.mesh.opacity

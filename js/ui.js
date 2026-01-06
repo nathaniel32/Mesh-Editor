@@ -129,6 +129,7 @@ function setupPointSizeSlider() {
         sizeVal.textContent = val.toFixed(3);
         if (globals.pointsMesh) {
             globals.pointsMesh.material.size = val;
+            globals.pointsMesh.visible = val > 0;
         }
     });
 }
@@ -156,6 +157,7 @@ export function updatePointSizeSlider(val, min = null, max = null, step = null) 
         state.pointSize = val; // Ensure state is synced
         if (globals.pointsMesh) {
             globals.pointsMesh.material.size = val;
+            globals.pointsMesh.visible = val > 0;
         }
     }
 }

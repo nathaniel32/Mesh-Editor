@@ -180,9 +180,9 @@ export function createPointCloud(positions, updateSize = false) {
     if (updateSize) {
         // Auto-calculate point size based on model scale
         const autoSize = radius / 400;
-        const autoMin = radius / 10000;
+        const autoMin = 0; // Allow hiding points completely
         const autoMax = radius / 10;
-        const autoStep = autoMin;
+        const autoStep = radius / 10000;
 
         updatePointSizeSlider(autoSize, autoMin, autoMax, autoStep);
     }
@@ -198,6 +198,7 @@ export function createPointCloud(positions, updateSize = false) {
     });
 
     globals.pointsMesh = new THREE.Points(geometry, material);
+    globals.pointsMesh.visible = state.pointSize > 0; // Ensure visibility respects point size
     globals.scene.add(globals.pointsMesh);
 
     // Center camera logic (simple re-center)
