@@ -86,26 +86,26 @@ function getDragDirection(axisChar, object) {
     // Transform local axis to world direction
     const worldAxis = localAxis.clone().applyQuaternion(object.quaternion).normalize();
     
-    // Project Center to Screen
-    const center = object.position.clone();
-    center.project(globals.camera); 
-    
-    // Project Center + Axis to Screen
-    const offsetPoint = object.position.clone().add(worldAxis.multiplyScalar(1)); 
-    offsetPoint.project(globals.camera); 
-    
-    // Vector on screen
-    const screenAxis = new THREE.Vector2(offsetPoint.x - center.x, offsetPoint.y - center.y);
-    
-    // Mouse NDC
+    // Use Raycaster to find which semi-axis (positive or negative) is closer to the mouse ray
+    const raycaster = new THREE.Raycaster();
     const rect = globals.renderer.domElement.getBoundingClientRect();
-    const mouseX = ((state.currentMousePosition.x - rect.left) / rect.width) * 2 - 1;
-    const mouseY = -((state.currentMousePosition.y - rect.top) / rect.height) * 2 + 1;
+    const x = ((state.currentMousePosition.x - rect.left) / rect.width) * 2 - 1;
+    const y = -((state.currentMousePosition.y - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(new THREE.Vector2(x, y), globals.camera);
+
+    const center = object.position.clone();
     
-    const mouseVec = new THREE.Vector2(mouseX - center.x, mouseY - center.y);
+    // Define segments for positive and negative axis directions
+    // Extending far enough to cover the gizmo handle
+    const posEnd = center.clone().add(worldAxis.clone().multiplyScalar(10000));
+    const negEnd = center.clone().add(worldAxis.clone().multiplyScalar(-10000));
     
-    // Dot Product
-    return screenAxis.dot(mouseVec) >= 0 ? 1 : -1;
+    // Calculate distance from the mouse ray to these segments
+    const distPos = raycaster.ray.distanceSqToSegment(center, posEnd);
+    const distNeg = raycaster.ray.distanceSqToSegment(center, negEnd);
+    
+    // The closer segment indicates the direction being dragged
+    return distPos < distNeg ? 1 : -1;
 }
 
 function handleMouseDown(e) {
