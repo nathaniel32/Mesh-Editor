@@ -289,26 +289,49 @@ export function renderCategories() {
             
             cubes.forEach((cube, index) => {
                 const isCubeActive = state.activeCubeId === cube.id;
+                const isVisible = cube.box.visible;
                 const cubeItem = document.createElement('div');
                 cubeItem.className = `flex items-center justify-between p-1.5 rounded text-[10px] cursor-pointer transition-colors ${isCubeActive ? 'bg-blue-900/30 text-blue-200 border border-blue-800' : 'bg-gray-900/50 text-gray-400 hover:bg-gray-700 hover:text-gray-200 border border-transparent'}`;
                 
                 cubeItem.innerHTML = `
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-cube text-[8px] ${isCubeActive ? 'text-blue-400' : 'text-gray-600'}"></i>
-                        <span>Cube ${index + 1} <span class="opacity-50">(${cube.vertices.length} pts)</span></span>
+                        <span class="${!isVisible ? 'opacity-50 line-through' : ''}">Cube ${index + 1} <span class="opacity-50">(${cube.vertices.length} pts)</span></span>
                     </div>
-                    <button class="delete-cube w-4 h-4 flex items-center justify-center hover:text-red-400 rounded transition-colors" title="Delete Cube">
-                        <i class="fa-solid fa-xmark text-[10px]"></i>
-                    </button>
+                    <div class="flex items-center">
+                        <button class="toggle-visibility w-4 h-4 flex items-center justify-center hover:text-gray-200 text-gray-400 rounded transition-colors mr-1" title="Toggle Visibility">
+                            <i class="fa-solid ${isVisible ? 'fa-eye' : 'fa-eye-slash'} text-[10px]"></i>
+                        </button>
+                        <button class="delete-cube w-4 h-4 flex items-center justify-center hover:text-red-400 rounded transition-colors" title="Delete Cube">
+                            <i class="fa-solid fa-xmark text-[10px]"></i>
+                        </button>
+                    </div>
                 `;
 
                 cubeItem.addEventListener('click', (e) => {
-                    if (e.target.closest('.delete-cube')) return;
+                    if (e.target.closest('.delete-cube') || e.target.closest('.toggle-visibility')) return;
                     state.activeCubeId = cube.id;
                     state.activeCategory = cat.id; // Also select parent category
                     updateTransformControls();
                     updateStatsUI();
                     renderCategories();
+                });
+
+                cubeItem.querySelector('.toggle-visibility').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    cube.box.visible = !cube.box.visible;
+                    
+                    // Update UI locally to avoid full re-render flickering
+                    const icon = e.currentTarget.querySelector('i');
+                    icon.className = `fa-solid ${cube.box.visible ? 'fa-eye' : 'fa-eye-slash'} text-[10px]`;
+                    const labelSpan = cubeItem.querySelector('span > span').previousSibling; 
+                    // Note: accessing text node might be brittle, let's just re-render categories or toggle class
+                    // Re-rendering is safer for consistency
+                    
+                    if (state.activeCubeId === cube.id) {
+                        updateTransformControls();
+                    }
+                    renderCategories(); 
                 });
 
                 cubeItem.querySelector('.delete-cube').addEventListener('click', (e) => {
@@ -335,7 +358,7 @@ export function updateTransformControls() {
     
     const cubeData = state.labeledCubes.get(state.activeCubeId);
     if (globals.transformControls && cubeData && cubeData.box) {
-        if (state.transformMode === 'view') {
+        if (state.transformMode === 'view' || !cubeData.box.visible) {
             globals.transformControls.detach();
         } else {
             if (globals.transformControls.object !== cubeData.box) {
